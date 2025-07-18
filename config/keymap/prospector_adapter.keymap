@@ -1,0 +1,10 @@
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        label = "Prospector Adapter Dummy Keymap";
+
+        default_layer {
+            bindings = <&kp A>;
+        };
+    };
+};
