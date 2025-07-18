@@ -1,0 +1,20 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: carrefinho
+      url-base: https://github.com/carrefinho
+
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: main
+      import: app/west.yml
+
+    - name: prospector
+      remote: carrefinho
+      revision: main
+      path: modules/prospector
+
+  self:
+    path: config
