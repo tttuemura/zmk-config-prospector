@@ -18,3 +18,8 @@ manifest:
 
   self:
     path: config
+
+zmk-config:
+  build:
+    - board: seeeduino_xiao_ble
+      shield: prospector_adapter
