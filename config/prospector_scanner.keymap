@@ -7,8 +7,8 @@
         compatible = "zmk,keymap";
         
         default_layer {
-            // This is a scanner device, no keys needed
-            bindings = <>;
+            // Scanner device - no physical keys, but need at least one binding
+            bindings = <&none>;
         };
     };
 };
