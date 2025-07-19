@@ -40,8 +40,17 @@ jobs:
     - name: West Build (Prospector Scanner)
       run: west build -s zmk/app -b seeeduino_xiao_ble -- -DSHIELD=prospector_scanner -DZMK_CONFIG="$GITHUB_WORKSPACE/config"
       
-    - name: Upload Firmware
+    - name: Upload Scanner Firmware
       uses: actions/upload-artifact@v4
       with:
         name: prospector-scanner-firmware
         path: build/zephyr/zmk.uf2
+        
+    - name: West Build (Prospector Adapter - Original Dongle)
+      run: west build -s zmk/app -b seeeduino_xiao_ble -d build-adapter -- -DSHIELD=prospector_adapter -DZMK_CONFIG="$GITHUB_WORKSPACE/config"
+      
+    - name: Upload Adapter Firmware  
+      uses: actions/upload-artifact@v4
+      with:
+        name: prospector-adapter-firmware
+        path: build-adapter/zephyr/zmk.uf2
