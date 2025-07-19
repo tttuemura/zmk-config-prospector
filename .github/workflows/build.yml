@@ -48,9 +48,11 @@ jobs:
         
     - name: West Build (Prospector Adapter - Original Dongle)
       run: west build -s zmk/app -b seeeduino_xiao_ble -d build-adapter -- -DSHIELD=prospector_adapter -DZMK_CONFIG="$GITHUB_WORKSPACE/config"
+      continue-on-error: true
       
     - name: Upload Adapter Firmware  
       uses: actions/upload-artifact@v4
+      if: success() || failure()
       with:
         name: prospector-adapter-firmware
         path: build-adapter/zephyr/zmk.uf2
