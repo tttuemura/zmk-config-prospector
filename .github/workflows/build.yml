@@ -24,7 +24,7 @@ jobs:
           zephyr/
           bootloader/
           zmk/
-        key: ${{ runner.os }}-build-${{ hashFiles(**/west.yml) }}
+        key: ${{ runner.os }}-build-${{ hashFiles('**/west.yml') }}
         restore-keys: |
           ${{ runner.os }}-build-
           
