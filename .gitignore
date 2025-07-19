@@ -1,0 +1,8 @@
+
+# West workspace files
+.west/
+modules/
+zephyr/
+zmk/
+build/
+.venv/
