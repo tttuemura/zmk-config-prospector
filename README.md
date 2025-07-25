@@ -167,3 +167,4 @@ Built with ZMK firmware and the Prospector ZMK module.
 # Test correct backlight pin
 # Test PWM brightness control
 # Test BLE scanner functionality
+# Fix initialization level error
