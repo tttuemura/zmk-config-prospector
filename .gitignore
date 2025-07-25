@@ -1,8 +1,26 @@
 
-# West workspace files
+# Build artifacts
+*.uf2
+build/
+
+# Virtual environments
+zmk-env/
+.venv/
+
+# West workspace
 .west/
 modules/
 zephyr/
 zmk/
-build/
-.venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
