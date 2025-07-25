@@ -168,3 +168,4 @@ Built with ZMK firmware and the Prospector ZMK module.
 # Test PWM brightness control
 # Test BLE scanner functionality
 # Fix initialization level error
+# Fix function declaration order
