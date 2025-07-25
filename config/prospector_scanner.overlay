@@ -11,7 +11,7 @@
     chosen {
         zmk,kscan = &kscan0;
         zmk,physical-layout = &default_layout;  // ZMK Studio compatibility: no matrix_transform!
-        zephyr,display = &st7789v;
+        zephyr,display = &st7789;
     };
 
     default_layout: default_layout {
@@ -35,28 +35,6 @@
         compatible = "zmk,kscan-gpio-direct";
         wakeup-source;
         input-gpios = <&xiao_d 0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-    };
-
-    // PWM backlight configuration (Pin 6 = P1.11)
-    pwmleds {
-        compatible = "pwm-leds";
-        disp_bl: pwm_led_1 {
-            pwms = <&pwm1 0 PWM_MSEC(1) PWM_POLARITY_NORMAL>;
-        };
-    };
-
-    // Alternative: Simple GPIO backlight control
-    backlight: backlight {
-        compatible = "gpio-leds";
-        bl_gpio: backlight_gpio {
-            gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
-            label = "Display Backlight";
-        };
-    };
-
-    // Ambient light sensor (optional)
-    aliases {
-        als = &apds9960;
     };
 };
 
@@ -107,7 +85,7 @@ disp_spi: &spi3 {
     pinctrl-names = "default", "sleep";
     cs-gpios = <&xiao_d 9 GPIO_ACTIVE_LOW>;
 
-    st7789v: st7789v@0 {
+    st7789: st7789v@0 {
         compatible = "sitronix,st7789v";
         spi-max-frequency = <31000000>;
         reg = <0>;
@@ -116,7 +94,7 @@ disp_spi: &spi3 {
         width = <240>;
         height = <280>;
         x-offset = <0>;
-        y-offset = <20>;
+        y-offset = <0>;
         vcom = <0x19>;
         gctrl = <0x35>;
         vrhs = <0x12>;
