@@ -142,7 +142,7 @@ To add status advertisement to your existing ZMK keyboard:
          import: app/west.yml
        - name: prospector-zmk-module
          remote: prospector
-         revision: feature/scanner-mode
+         revision: main
          path: modules/prospector-zmk-module
    ```
 
@@ -162,10 +162,10 @@ To add status advertisement to your existing ZMK keyboard:
 - **Multi-device**: Keyboards maintain all standard ZMK connectivity features
 
 Built with ZMK firmware and the Prospector ZMK module.
-# Trigger build
-# Test backlight control fix
-# Test correct backlight pin
-# Test PWM brightness control
-# Test BLE scanner functionality
-# Fix initialization level error
-# Fix function declaration order
+
+## Important Notes
+
+- **Scanner Device**: This repository builds a BLE observer device that scans for keyboard advertisements
+- **Keyboard Integration**: Each keyboard needs the prospector-zmk-module to broadcast status
+- **No Pairing Required**: Scanner uses non-intrusive BLE advertisements (no connection)
+- **Multiple Keyboards**: Scanner can monitor up to 3 keyboards simultaneously
