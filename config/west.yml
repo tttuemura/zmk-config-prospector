@@ -11,7 +11,7 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: feature/scanner-mode
+      revision: main
       path: modules/prospector-zmk-module
   self:
     path: config
