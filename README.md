@@ -163,3 +163,4 @@ To add status advertisement to your existing ZMK keyboard:
 
 Built with ZMK firmware and the Prospector ZMK module.
 # Trigger build
+# Test backlight control fix
