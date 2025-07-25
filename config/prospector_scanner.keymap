@@ -1,14 +1,21 @@
-// Prospector Scanner Keymap
+/*
+ * Copyright (c) 2024 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 
 / {
     keymap {
         compatible = "zmk,keymap";
-        
+
         default_layer {
-            // Scanner device - no physical keys, but need at least one binding
-            bindings = <&none>;
+            // Scanner device with minimal input - single button for settings/display toggle
+            bindings = <
+                &kp C_AC_SETTINGS  // Settings key for scanner control
+            >;
         };
     };
 };
