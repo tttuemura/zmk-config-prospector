@@ -169,3 +169,4 @@ Built with ZMK firmware and the Prospector ZMK module.
 - **Keyboard Integration**: Each keyboard needs the prospector-zmk-module to broadcast status
 - **No Pairing Required**: Scanner uses non-intrusive BLE advertisements (no connection)
 - **Multiple Keyboards**: Scanner can monitor up to 3 keyboards simultaneously
+# Trigger build for scanner protocol fix (commit 9489929)
