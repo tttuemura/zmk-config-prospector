@@ -1,4 +1,4 @@
-# Build trigger: Change NerdFont to 40px (only 20px/40px available)
-# Using correct NerdFont size with quad spacing + 5px letter spacing
-# Should fix vertical line artifacts between modifier symbols
-# Mon Jul 29 06:15:00 JST 2025
+# Build trigger: Fix modifier vertical lines - match YADS implementation
+# Single space between symbols (not quad), no letter spacing
+# This matches exact YADS behavior to eliminate artifacts
+# Mon Jul 29 06:20:00 JST 2025
