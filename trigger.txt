@@ -1,4 +1,4 @@
-# Build trigger: Phantom Ctrl fix + performance optimization
-# Fixed HID report validation + removed all debug logging
-# Should resolve periodic Ctrl display issue + improve MCU performance  
-# Mon Jul 29 05:15:00 JST 2025
+# Build trigger: DISABLE modifier detection to fix phantom Ctrl
+# Completely disabled HID report modifier reading to prevent periodic Ctrl display
+# This was caused by zmk_hid_get_keyboard_report() returning stale data with Ctrl flag
+# Mon Jul 29 05:25:00 JST 2025
