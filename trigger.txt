@@ -1,5 +1,5 @@
-# Build trigger: Remove unnecessary scanner power management
-# - Scanner is USB powered, no power saving needed
-# - Keep ambient light sensor auto-brightness
-# - Keyboard already has proper activity-based intervals
-# Mon Jul 29 07:00:00 JST 2025
+# Build trigger: Adjust display layout positioning
+# - Device name down 10px, USB/BLE down 30px
+# - Layer and Modifier widgets down 10px each
+# - Better visual spacing and balance
+# Mon Jul 29 07:05:00 JST 2025
