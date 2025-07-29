@@ -1,5 +1,5 @@
-# Build trigger: Scanner power management implementation
-# - Multi-state power modes (Active/Idle/Standby/Sleep)
-# - Gray inactive layer numbers + power management
-# - Touch wake + dynamic scan intervals
-# Mon Jul 29 06:45:00 JST 2025
+# Build trigger: Remove unnecessary scanner power management
+# - Scanner is USB powered, no power saving needed
+# - Keep ambient light sensor auto-brightness
+# - Keyboard already has proper activity-based intervals
+# Mon Jul 29 07:00:00 JST 2025
