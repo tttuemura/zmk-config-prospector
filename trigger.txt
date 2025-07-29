@@ -1,3 +1,3 @@
-# Build trigger: NerdFont linker fix pushed to module + 5Hz recovery
-# prospector-zmk-module bd11601 commit with fallback removal
-# Mon Jul 29 04:50:00 JST 2025
+# Build trigger: UI polish fixes - modifier/BLE spacing + layer fonts
+# Fixed NerdFont overlap + closer BLE spacing + larger fonts (16px/24px)
+# Mon Jul 29 05:00:00 JST 2025
