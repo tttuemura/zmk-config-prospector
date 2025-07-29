@@ -1,4 +1,4 @@
-# Build trigger: Remove test code that was causing phantom Ctrl display
-# Restored normal modifier detection but ensured no test code remains
-# This removes any periodic forced Ctrl flag setting while preserving real key detection
-# Mon Jul 29 05:30:00 JST 2025
+# Build trigger: Increase layer widget fonts + phantom Ctrl fix  
+# Layer title: 12px → 18px, Layer numbers: 20px → 28px for better readability
+# Plus phantom Ctrl test code removal from previous commits
+# Mon Jul 29 05:40:00 JST 2025
