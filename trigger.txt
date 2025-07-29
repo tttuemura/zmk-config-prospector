@@ -1,1 +1,3 @@
-# Trigger build with compact payload scanner fix Fri Jul 25 23:14:26 JST 2025
+# Build trigger: NerdFont fallback fix + 5Hz instant recovery
+# Activity-based Kconfig intervals + linker error resolution
+# Mon Jul 29 04:45:00 JST 2025
