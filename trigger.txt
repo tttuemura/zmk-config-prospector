@@ -1,4 +1,4 @@
-# Build trigger: Phantom Ctrl modifier debugging investigation
-# Added ERROR level logs to track source of periodic Ctrl display issue  
-# Keyboard + Scanner enhanced logging for troubleshooting
-# Mon Jul 29 05:10:00 JST 2025
+# Build trigger: Phantom Ctrl fix + performance optimization
+# Fixed HID report validation + removed all debug logging
+# Should resolve periodic Ctrl display issue + improve MCU performance  
+# Mon Jul 29 05:15:00 JST 2025
