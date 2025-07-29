@@ -1,4 +1,4 @@
-# Build trigger: Increase layer widget fonts + phantom Ctrl fix  
-# Layer title: 12px → 18px, Layer numbers: 20px → 28px for better readability
-# Plus phantom Ctrl test code removal from previous commits
-# Mon Jul 29 05:40:00 JST 2025
+# Build trigger: UI positioning fine-tuning + retro font integration
+# BLE profile y-offset adjusted to -16, battery widget moved to -10
+# Device name now uses unscii_16 pixel font for retro style
+# Mon Jul 29 06:00:00 JST 2025
