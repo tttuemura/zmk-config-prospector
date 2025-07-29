@@ -1,4 +1,5 @@
-# Build trigger: Fix modifier vertical lines - match YADS implementation
-# Single space between symbols (not quad), no letter spacing
-# This matches exact YADS behavior to eliminate artifacts
-# Mon Jul 29 06:20:00 JST 2025
+# Build trigger: Scanner power management implementation
+# - Multi-state power modes (Active/Idle/Standby/Sleep)
+# - Gray inactive layer numbers + power management
+# - Touch wake + dynamic scan intervals
+# Mon Jul 29 06:45:00 JST 2025
