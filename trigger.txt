@@ -1,4 +1,4 @@
-# Build trigger: UI positioning fine-tuning + retro font integration
-# BLE profile y-offset adjusted to -16, battery widget moved to -10
-# Device name now uses unscii_16 pixel font for retro style
-# Mon Jul 29 06:00:00 JST 2025
+# Build trigger: Fix modifier key vertical line artifacts
+# Quad spacing + 32px NerdFont + 5px letter spacing to prevent overlap
+# Should eliminate vertical lines between modifier symbols
+# Mon Jul 29 06:10:00 JST 2025
