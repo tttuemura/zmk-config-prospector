@@ -140,7 +140,7 @@ Add to your keyboard's `.conf` file:
 ```kconfig
 # Essential: Enable Prospector status advertisement
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # ≤8 characters
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Any length - uses BLE device name
 
 # Recommended: Activity-based power management for battery efficiency
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
@@ -266,7 +266,7 @@ CONFIG_LV_FONT_UNSCII_16=y                    # Retro device name font
 ```kconfig
 # Basic advertisement
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="YourBoard"  # ≤8 characters
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="YourBoard"  # Keyboard identifier (any length)
 
 # Power optimization (recommended)
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
@@ -294,7 +294,7 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 |---------|----------|----------|
 | **No Advertisement** | Scanner never detects keyboard | • Add `CONFIG_ZMK_STATUS_ADVERTISEMENT=y`<br>• Rebuild and flash keyboard<br>• Check power management settings |
 | **Battery Shows 0%** | Battery always zero | • Verify `CONFIG_ZMK_BATTERY_REPORTING=y`<br>• Check battery sensor wiring<br>• Test with USB power |
-| **Name Too Long** | Build errors or truncation | • Limit keyboard name to 8 characters<br>• Use shorter identifier |
+| **Name Not Shown** | Scanner shows "Unknown" | • Ensure `CONFIG_BT_DEVICE_NAME` is set<br>• Active Scan will fetch actual BLE device name |
 
 ### Common BLE Issues
 
