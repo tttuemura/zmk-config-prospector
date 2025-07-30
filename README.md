@@ -59,12 +59,15 @@
 
 ## 🛠️ Hardware Requirements
 
-### Scanner Device
+### Scanner Device (Prospector Hardware)
+This project uses the **Prospector** hardware design as the base platform:
+
 - **MCU**: [Seeeduino XIAO BLE](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html) (nRF52840)
 - **Display**: Waveshare 1.69" Round LCD (ST7789V, 240x280 pixels)
 - **Optional**: Adafruit APDS9960 ambient light sensor
 - **Power**: USB Type-C (5V)
-- **Case**: 3D printed enclosure
+- **Case**: 3D printed Prospector enclosure
+- **Hardware Design**: Based on original Prospector project specifications
 
 ### Display Wiring
 ```
@@ -135,18 +138,25 @@ manifest:
 Add to your keyboard's `.conf` file:
 
 ```kconfig
-# Enable Prospector status advertisement
+# Essential: Enable Prospector status advertisement
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # ≤8 characters
 
-# Activity-based power management (optional but recommended)
+# Recommended: Activity-based power management for battery efficiency
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
 CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=200    # 5Hz when active
 CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=1000     # 1Hz when idle  
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=2000  # 2s to idle transition
 
-# For split keyboards - enable peripheral battery fetching
+# Required for split keyboards: Enable peripheral battery fetching
 CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+
+# Recommended: Enable battery reporting if not already enabled
+CONFIG_ZMK_BATTERY_REPORTING=y
+
+# Required for proper BLE functionality (usually enabled by default)
+CONFIG_BT=y
+CONFIG_BT_PERIPHERAL=y
 ```
 
 #### C. Rebuild and Flash
@@ -156,7 +166,7 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 
 ### Step 3: Verification
 
-1. **Scanner Display**: Should show "Scanning..." initially
+1. **Scanner Display**: Should show "Initializing..." then "Scanning..." initially
 2. **Keyboard Detection**: Scanner displays keyboard name within 5 seconds
 3. **Status Updates**: Battery, layer, and modifier information should update in real-time
 4. **BLE Verification**: Use nRF Connect app to verify advertisements with manufacturer data `FF FF AB CD`
@@ -334,6 +344,13 @@ CONFIG_ZMK_LOG_LEVEL_DBG=y
 
 ### Project License
 This project is licensed under the **MIT License**. See `LICENSE` file for details.
+
+### Hardware License
+This project uses the **Prospector** hardware design:
+- **License**: MIT License
+- **Original Design**: Multiple contributors to the Prospector project
+- **Hardware Repository**: Various Prospector implementations
+- **Usage**: Complete hardware design including PCB, case, and component selection
 
 ### Third-Party Components
 
