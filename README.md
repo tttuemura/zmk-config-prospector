@@ -11,14 +11,16 @@
 ## 🎯 Key Features
 
 ### 📱 **YADS-Style Professional UI**
-- **Multi-Widget Display**: Connection status, layer indicators, modifier keys, and battery visualization
+- **Multi-Widget Display**: Connection status, layer indicators, modifier keys, WPM tracking, and battery visualization
 - **Split Keyboard Support**: Unified display showing both left and right side information
-- **Color-Coded Status**: Green/Yellow/Red battery indicators, pastel layer colors
-- **Real-time Updates**: Instant response to keyboard state changes
+- **Color-Coded Status**: 5-level battery indicators (Green/Light Green/Yellow/Orange/Red), unique pastel layer colors
+- **Real-time Updates**: Instant response to keyboard state changes with sub-second latency
+- **WPM Tracking**: Real-time Words Per Minute calculation with custom implementation
 
 ### 🔋 **Smart Power Management**
-- **Activity-Based Intervals**: 5Hz (200ms) when typing, 1Hz (1000ms) when idle
+- **Activity-Based Intervals**: 10Hz (100ms) when typing, 0.1Hz (10s) when idle
 - **Automatic Transitions**: Seamless switching between active/idle states
+- **WPM-Aware Updates**: Higher frequency during active typing sessions
 - **Minimal Impact**: ~25% battery consumption increase on keyboards
 - **USB Powered Scanner**: No battery concerns for the display device
 
@@ -138,25 +140,47 @@ manifest:
 Add to your keyboard's `.conf` file:
 
 ```kconfig
-# Essential: Enable Prospector status advertisement
+# ========================================
+# ESSENTIAL CONFIGURATION (Required)
+# ========================================
+# Enable Prospector status advertisement system
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Any length - uses BLE device name
-
-# Recommended: Activity-based power management for battery efficiency
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=200
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=1000
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=2000
-
-# Required for split keyboards: Enable peripheral battery fetching
-CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
-
-# Recommended: Enable battery reporting if not already enabled
-CONFIG_ZMK_BATTERY_REPORTING=y
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Display name (any length)
 
 # Required for proper BLE functionality (usually enabled by default)
 CONFIG_BT=y
 CONFIG_BT_PERIPHERAL=y
+
+# Required for split keyboards: Enable peripheral battery fetching
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+
+# Enable battery reporting if not already enabled
+CONFIG_ZMK_BATTERY_REPORTING=y
+
+# ========================================
+# RECOMMENDED CONFIGURATION (Power Efficiency) 
+# ========================================
+# Activity-based power management for optimal battery life
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # High frequency when typing (10Hz)
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000    # Low frequency when idle (0.1Hz)
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=120000  # 2 minutes before idle mode
+
+# ========================================
+# OPTIONAL CONFIGURATION (Advanced Features)
+# ========================================
+# Layer display configuration (default: 7 layers, 0-6)
+CONFIG_PROSPECTOR_MAX_LAYERS=7              # Adjust if you have more layers (max 10)
+
+# Custom advertisement intervals (if not using activity-based)
+# CONFIG_ZMK_STATUS_ADV_INTERVAL_MS=1000    # Fixed interval (only if activity-based disabled)
+
+# Power management options
+# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y    # Stop advertisements in sleep mode (saves battery)
+
+# Debug options (disable for production use)
+# CONFIG_LOG=y
+# CONFIG_ZMK_LOG_LEVEL_DBG=y              # Enable detailed logging
 ```
 
 #### C. Rebuild and Flash
@@ -190,9 +214,11 @@ The scanner listens for BLE manufacturer data with this structure:
 | 10 | Device Role | 1 byte | 0=Standalone, 1=Central, 2=Peripheral | `01` (Central) |
 | 11 | Device Index | 1 byte | Split keyboard index | `00` |
 | 12-14 | Peripheral Batteries | 3 bytes | Left/Right/Aux battery levels | `52 00 00` (82%, none, none) |
-| 15-20 | Layer Name | 6 bytes | Layer identifier | `4C3000...` ("L0") |
-| 21-24 | Keyboard ID | 4 bytes | Hash of keyboard name | `12345678` |
-| 25 | Modifier Flags | 1 byte | CSAG modifier states | `05` (Ctrl+Alt) |
+| 15-18 | Layer Name | 4 bytes | Layer identifier | `4C3000...` ("L0") |
+| 19-22 | Keyboard ID | 4 bytes | Hash of keyboard name | `12345678` |
+| 23 | Modifier Flags | 1 byte | CSAG modifier states | `05` (Ctrl+Alt) |
+| 24 | WPM Value | 1 byte | Words per minute (0-255) | `3C` (60 WPM) |
+| 25 | Reserved | 1 byte | Future expansion | `00` |
 
 #### Status Flags Breakdown (Bit 9)
 ```
@@ -217,25 +243,34 @@ Bit 3: Left GUI     Bit 7: Right GUI
 ### Widget Layout
 ```
 ┌─────────────────────────────┐
-│         Device Name         │ ← Retro pixel font
-│                    USB/BLE  │ ← Connection status
-│                         3   │ ← Profile number
+│         Device Name         │ ← Device name (montserrat_20)
+│                    USB [P0] │ ← Connection status + Profile
 │                             │
-│          Layer              │ ← Layer title
-│    0  1  2  3  4  5  6      │ ← Pastel colored numbers
+│ WPM                    RX   │ ← WPM tracker + Signal info
+│ 45              -45dBm 1.0Hz│
+│                             │
+│          Layer              │ ← Layer title (montserrat_16)
+│    0  1  2  3  4  5  6      │ ← Pastel colored layer numbers
 │                             │
 │        󰘴  󰘶  󰘵              │ ← NerdFont modifier symbols
 │                             │
-│    ████████████ 85%         │ ← Color-coded battery bar
-│    L: ████████ 78%          │ ← Split keyboard left side
+│    ████████████ 85%         │ ← 5-level color-coded battery
+│    ████████████ 78%         │ ← Split keyboard (Central/Peripheral)
 └─────────────────────────────┘
 ```
 
 ### Visual Elements
-- **Battery Colors**: Green (>60%), Yellow (20-60%), Red (<20%)
-- **Layer Colors**: Each layer has unique pastel color, inactive layers in gray
-- **Connection Status**: Color-coded USB (red/white) and BLE (green/blue/white)
-- **Modifier Keys**: YADS-style NerdFont symbols for Ctrl/Shift/Alt/GUI
+- **5-Level Battery Colors**: 
+  - 🟢 **80%+**: Green (Excellent)
+  - 🟡 **60-79%**: Light Green (Good)  
+  - 🟡 **40-59%**: Yellow (Moderate)
+  - 🟠 **20-39%**: Orange (Low)
+  - 🔴 **<20%**: Red (Critical)
+- **Layer Colors**: Each layer (0-6) has unique pastel color, inactive layers in gray
+- **WPM Display**: Real-time typing speed with MAX!! display at 255 WPM
+- **Signal Information**: RSSI strength (-dBm) and reception rate (Hz)
+- **Connection Status**: Color-coded USB (red/white) and BLE (green/blue/white) with profile numbers
+- **Modifier Keys**: YADS-style NerdFont symbols (󰘴 Ctrl, 󰘶 Shift, 󰘵 Alt, 󰘳 GUI)
 
 ### Auto-Brightness
 - **Ambient Light Sensor**: APDS9960 automatically adjusts display brightness
@@ -246,36 +281,71 @@ Bit 3: Left GUI     Bit 7: Right GUI
 
 ### Scanner Device (`prospector_scanner.conf`)
 ```kconfig
-# Core features
+# ========================================
+# CORE SCANNER FEATURES
+# ========================================
 CONFIG_PROSPECTOR_MODE_SCANNER=y
-CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y  # Auto-brightness
-CONFIG_PROSPECTOR_MAX_KEYBOARDS=2             # Multi-keyboard support
+CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y  # Auto-brightness (APDS9960)
+CONFIG_PROSPECTOR_MAX_KEYBOARDS=3             # Multi-keyboard support (1-3)
 
-# Display settings
-CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=80         # Fallback brightness %
+# ========================================
+# DISPLAY SETTINGS
+# ========================================
+CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=80         # Fallback brightness % (10-100)
 CONFIG_PROSPECTOR_ROTATE_DISPLAY_180=n        # Display orientation
+CONFIG_PROSPECTOR_MAX_LAYERS=7                # Layer display range (0-6 default, max 10)
 
-# Font support
-CONFIG_LV_FONT_MONTSERRAT_12=y
-CONFIG_LV_FONT_MONTSERRAT_18=y 
-CONFIG_LV_FONT_MONTSERRAT_28=y
-CONFIG_LV_FONT_UNSCII_16=y                    # Retro device name font
+# ========================================
+# LVGL FONT SUPPORT (Required)
+# ========================================
+CONFIG_LV_FONT_MONTSERRAT_12=y                # Small text
+CONFIG_LV_FONT_MONTSERRAT_16=y                # WPM values, titles
+CONFIG_LV_FONT_MONTSERRAT_18=y                # Layer title
+CONFIG_LV_FONT_MONTSERRAT_20=y                # Device name
+CONFIG_LV_FONT_MONTSERRAT_22=y                # Reserved
+CONFIG_LV_FONT_MONTSERRAT_24=y                # Reserved  
+CONFIG_LV_FONT_MONTSERRAT_28=y                # Layer numbers
+CONFIG_LV_FONT_UNSCII_8=y                     # Small labels
+CONFIG_LV_FONT_UNSCII_16=y                    # Retro font (optional)
+
+# ========================================
+# PERFORMANCE & DEBUGGING
+# ========================================
+# CONFIG_LOG=y                                # Enable logging
+# CONFIG_ZMK_LOG_LEVEL_DBG=y                  # Debug level logs
+# CONFIG_PROSPECTOR_SCANNER_UPDATE_RATE_MS=50 # Display refresh rate
 ```
 
-### Keyboard Integration
+### Keyboard Integration (Complete Reference)
 ```kconfig
-# Basic advertisement
+# ========================================
+# ESSENTIAL CONFIGURATION (Copy to your keyboard's .conf)
+# ========================================
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="YourBoard"  # Keyboard identifier (any length)
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="YourBoard"  # Display name (any length)
+CONFIG_ZMK_BATTERY_REPORTING=y                   # Enable battery reporting
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y  # For split keyboards
 
-# Power optimization (recommended)
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=200
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=1000
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=2000
+# ========================================
+# POWER OPTIMIZATION (Highly Recommended)
+# ========================================
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y          # Smart power management
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # 10Hz when typing (fast response)
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000    # 0.1Hz when idle (battery save)
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=120000 # 2 minutes to idle mode
 
-# Split keyboard support
-CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+# ========================================
+# DISPLAY CUSTOMIZATION (Optional)
+# ========================================
+CONFIG_PROSPECTOR_MAX_LAYERS=7                  # Adjust for your layer count (2-10)
+# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y         # Stop ads in sleep (max battery save)
+# CONFIG_ZMK_STATUS_ADV_INTERVAL_MS=1000        # Fixed interval (if not activity-based)
+
+# ========================================
+# DEBUGGING (Development Only)
+# ========================================  
+# CONFIG_LOG=y
+# CONFIG_ZMK_LOG_LEVEL_DBG=y                   # Enable detailed advertisement logs
 ```
 
 ## 🐛 Troubleshooting
@@ -385,12 +455,20 @@ This project uses the **Prospector** hardware design:
 
 ## 🚀 Future Enhancements
 
-### Planned Features
-- [ ] **WPM (Words Per Minute)** widget with typing speed tracking
+### Recently Added Features ✅
+- [x] **WPM (Words Per Minute)** widget with real-time typing speed tracking
+- [x] **Enhanced 5-level battery visualization** with gradient colors
+- [x] **Configurable layer display** (CONFIG_PROSPECTOR_MAX_LAYERS)
+- [x] **RSSI signal strength** and reception rate monitoring
+- [x] **Activity-based power management** with smart intervals
+- [x] **Split keyboard unified display** with both sides' battery info
+
+### Planned Features 🚧
 - [ ] **Advanced power profiling** with machine learning-based predictions
 - [ ] **Custom themes** and color scheme support
 - [ ] **Web configuration** interface via USB/BLE
 - [ ] **Multiple scanner sync** for large setups
+- [ ] **Caps Word and Num Lock** status indicators
 
 ### Hardware Roadmap
 - [ ] **Wireless charging** support for battery operation
@@ -420,6 +498,42 @@ west update
 
 # Build and test
 west build -s zmk/app -b seeeduino_xiao_ble -- -DSHIELD=prospector_scanner
+```
+
+## 💡 Quick Setup Examples
+
+### Common Keyboard Configurations
+
+#### Split Keyboard (Corne, Lily58, etc.)
+```kconfig
+# Essential for split keyboards
+CONFIG_ZMK_STATUS_ADVERTISEMENT=y
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Corne"
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+
+# Power optimization
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000
+```
+
+#### 60% Keyboard (Single Board)
+```kconfig
+# Basic setup
+CONFIG_ZMK_STATUS_ADVERTISEMENT=y  
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="GH60"
+CONFIG_ZMK_BATTERY_REPORTING=y
+
+# Layer configuration (if using 4 layers: 0-3)
+CONFIG_PROSPECTOR_MAX_LAYERS=4
+```
+
+#### High-Layer Count Keyboard
+```kconfig  
+# For keyboards with many layers (0-9)
+CONFIG_ZMK_STATUS_ADVERTISEMENT=y
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Planck"
+CONFIG_PROSPECTOR_MAX_LAYERS=10  # Display layers 0-9
 ```
 
 ## 📞 Support
