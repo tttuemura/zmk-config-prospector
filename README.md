@@ -162,25 +162,32 @@ CONFIG_ZMK_BATTERY_REPORTING=y
 # ========================================
 # Activity-based power management for optimal battery life
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # High frequency when typing (10Hz)
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000    # Low frequency when idle (0.1Hz)
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=120000  # 2 minutes before idle mode
+# High frequency when typing (10Hz)
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
+# Low frequency when idle (0.1Hz)  
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000
+# 2 minutes before idle mode
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=120000
 
 # ========================================
 # OPTIONAL CONFIGURATION (Advanced Features)
 # ========================================
 # Layer display configuration (default: 7 layers, 0-6)
-CONFIG_PROSPECTOR_MAX_LAYERS=7              # Adjust if you have more layers (max 10)
+# Adjust if you have more layers (max 10)
+CONFIG_PROSPECTOR_MAX_LAYERS=7
 
 # Custom advertisement intervals (if not using activity-based)
-# CONFIG_ZMK_STATUS_ADV_INTERVAL_MS=1000    # Fixed interval (only if activity-based disabled)
+# Fixed interval (only if activity-based disabled)
+# CONFIG_ZMK_STATUS_ADV_INTERVAL_MS=1000
 
 # Power management options
-# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y    # Stop advertisements in sleep mode (saves battery)
+# Stop advertisements in sleep mode (saves battery)
+# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y
 
 # Debug options (disable for production use)
 # CONFIG_LOG=y
-# CONFIG_ZMK_LOG_LEVEL_DBG=y              # Enable detailed logging
+# Enable detailed logging
+# CONFIG_ZMK_LOG_LEVEL_DBG=y
 ```
 
 #### C. Rebuild and Flash
@@ -329,23 +336,31 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y  # For split keyboards
 # ========================================
 # POWER OPTIMIZATION (Highly Recommended)
 # ========================================
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y          # Smart power management
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # 10Hz when typing (fast response)
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000    # 0.1Hz when idle (battery save)
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=120000 # 2 minutes to idle mode
+# Smart power management
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
+# 10Hz when typing (fast response)
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
+# 0.1Hz when idle (battery save)
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000
+# 2 minutes to idle mode
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=120000
 
 # ========================================
 # DISPLAY CUSTOMIZATION (Optional)
 # ========================================
-CONFIG_PROSPECTOR_MAX_LAYERS=7                  # Adjust for your layer count (2-10)
-# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y         # Stop ads in sleep (max battery save)
-# CONFIG_ZMK_STATUS_ADV_INTERVAL_MS=1000        # Fixed interval (if not activity-based)
+# Adjust for your layer count (2-10)
+CONFIG_PROSPECTOR_MAX_LAYERS=7
+# Stop ads in sleep (max battery save)
+# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y
+# Fixed interval (if not activity-based)
+# CONFIG_ZMK_STATUS_ADV_INTERVAL_MS=1000
 
 # ========================================
 # DEBUGGING (Development Only)
 # ========================================  
 # CONFIG_LOG=y
-# CONFIG_ZMK_LOG_LEVEL_DBG=y                   # Enable detailed advertisement logs
+# Enable detailed advertisement logs
+# CONFIG_ZMK_LOG_LEVEL_DBG=y
 ```
 
 ## 🐛 Troubleshooting
@@ -533,7 +548,8 @@ CONFIG_PROSPECTOR_MAX_LAYERS=4
 # For keyboards with many layers (0-9)
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
 CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Planck"
-CONFIG_PROSPECTOR_MAX_LAYERS=10  # Display layers 0-9
+# Display layers 0-9
+CONFIG_PROSPECTOR_MAX_LAYERS=10
 ```
 
 ## 📞 Support
