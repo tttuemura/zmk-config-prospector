@@ -132,7 +132,7 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: feature/yads-widget-integration
+      revision: feature/layer-event-listener
       path: modules/prospector-zmk-module
 ```
 
