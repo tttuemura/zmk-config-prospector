@@ -93,6 +93,7 @@ LCD_BL   -> Pin 6  (Backlight PWM)
 
 #### Option A: GitHub Actions (Recommended)
 1. Fork this repository: `https://github.com/t-ogura/zmk-config-prospector`
+   - Use the `main` branch (stable v1.0.0 release)
 2. Enable GitHub Actions in your fork
 3. Push any commit to trigger automated build
 4. Download `prospector-scanner-firmware.zip` from Actions artifacts
@@ -100,9 +101,10 @@ LCD_BL   -> Pin 6  (Backlight PWM)
 
 #### Option B: Local Build
 ```bash
-# Clone repository
+# Clone repository (main branch for v1.0.0)
 git clone https://github.com/t-ogura/zmk-config-prospector
 cd zmk-config-prospector
+git checkout main
 
 # Initialize and build
 west init -l config
@@ -132,7 +134,7 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: feature/layer-event-listener
+      revision: v1.0.0
       path: modules/prospector-zmk-module
 ```
 
@@ -145,7 +147,7 @@ Add to your keyboard's `.conf` file:
 # ========================================
 # Enable Prospector status advertisement system
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Display name (any length)
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Display name
 
 # Required for proper BLE functionality (usually enabled by default)
 CONFIG_BT=y
@@ -162,8 +164,8 @@ CONFIG_ZMK_BATTERY_REPORTING=y
 # ========================================
 # Activity-based power management for optimal battery life
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-# High frequency when typing (10Hz)
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
+# High frequency when typing (5Hz - good balance of responsiveness/battery)
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=200
 # Low frequency when idle (0.1Hz)  
 CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000
 # 2 minutes before idle mode
@@ -199,7 +201,7 @@ CONFIG_PROSPECTOR_MAX_LAYERS=7
 
 1. **Scanner Display**: Should show "Initializing..." then "Scanning..." initially
 2. **Keyboard Detection**: Scanner displays keyboard name within 5 seconds
-3. **Status Updates**: Battery, layer, and modifier information should update in real-time
+3. **Status Updates**: Battery, layer, WPM, and connection information should update in real-time
 4. **BLE Verification**: Use nRF Connect app to verify advertisements with manufacturer data `FF FF AB CD`
 
 ## 📊 Protocol Specification
@@ -221,23 +223,24 @@ The scanner listens for BLE manufacturer data with this structure:
 | 10 | Device Role | 1 byte | 0=Standalone, 1=Central, 2=Peripheral | `01` (Central) |
 | 11 | Device Index | 1 byte | Split keyboard index | `00` |
 | 12-14 | Peripheral Batteries | 3 bytes | Left/Right/Aux battery levels | `52 00 00` (82%, none, none) |
-| 15-18 | Layer Name | 4 bytes | Layer identifier | `4C3000...` ("L0") |
+| 15-18 | Layer Name | 4 bytes | Layer identifier | `4C30...` ("L0") |
 | 19-22 | Keyboard ID | 4 bytes | Hash of keyboard name | `12345678` |
-| 23 | Modifier Flags | 1 byte | CSAG modifier states | `05` (Ctrl+Alt) |
+| 23 | Modifier Flags | 1 byte | L/R Ctrl,Shift,Alt,GUI | `05` (LCtrl+LShift) |
 | 24 | WPM Value | 1 byte | Words per minute (0-255) | `3C` (60 WPM) |
 | 25 | Reserved | 1 byte | Future expansion | `00` |
 
 #### Status Flags Breakdown (Bit 9)
 ```
-Bit 0: USB HID Ready
-Bit 1: BLE Connected  
-Bit 2: BLE Bonded
-Bit 3: Caps Word Active
-Bit 4: Charging Status
-Bit 5-7: Reserved
+Bit 0: Caps Word Active
+Bit 1: Charging Status
+Bit 2: USB Connected
+Bit 3: USB HID Ready
+Bit 4: BLE Connected
+Bit 5: BLE Bonded
+Bit 6-7: Reserved
 ```
 
-#### Modifier Flags Breakdown (Bit 25)
+#### Modifier Flags Breakdown (Bit 23)
 ```
 Bit 0: Left Ctrl    Bit 4: Right Ctrl
 Bit 1: Left Shift   Bit 5: Right Shift  
@@ -254,7 +257,7 @@ Bit 3: Left GUI     Bit 7: Right GUI
 │                    USB [P0] │ ← Connection status + Profile
 │                             │
 │ WPM                    RX   │ ← WPM tracker + Signal info
-│ 45              -45dBm 1.0Hz│
+│ 045             -45dBm 1.0Hz│
 │                             │
 │          Layer              │ ← Layer title (montserrat_16)
 │    0  1  2  3  4  5  6      │ ← Pastel colored layer numbers
@@ -274,15 +277,15 @@ Bit 3: Left GUI     Bit 7: Right GUI
   - 🟠 **20-39%**: Orange (Low)
   - 🔴 **<20%**: Red (Critical)
 - **Layer Colors**: Each layer (0-6) has unique pastel color, inactive layers in gray
-- **WPM Display**: Real-time typing speed with MAX!! display at 255 WPM
+- **WPM Display**: Real-time typing speed calculation (0-255 WPM range)
 - **Signal Information**: RSSI strength (-dBm) and reception rate (Hz)
 - **Connection Status**: Color-coded USB (red/white) and BLE (green/blue/white) with profile numbers
 - **Modifier Keys**: YADS-style NerdFont symbols (󰘴 Ctrl, 󰘶 Shift, 󰘵 Alt, 󰘳 GUI)
 
-### Auto-Brightness
-- **Ambient Light Sensor**: APDS9960 automatically adjusts display brightness
-- **Range**: 10-100% based on 10-1000 lux light levels
-- **Fallback**: Fixed 80% brightness if sensor unavailable
+### Display Brightness
+- **Fixed Brightness**: Configurable brightness level (10-100%)
+- **Auto-Brightness**: Planned feature using APDS9960 sensor (not currently working)
+- **Default**: 80% brightness provides good visibility in most conditions
 
 ## 🔧 Configuration Options
 
@@ -292,13 +295,13 @@ Bit 3: Left GUI     Bit 7: Right GUI
 # CORE SCANNER FEATURES
 # ========================================
 CONFIG_PROSPECTOR_MODE_SCANNER=y
-CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y  # Auto-brightness (APDS9960)
+# CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y  # Auto-brightness (planned feature - currently disabled)
 CONFIG_PROSPECTOR_MAX_KEYBOARDS=3             # Multi-keyboard support (1-3)
 
 # ========================================
 # DISPLAY SETTINGS
 # ========================================
-CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=80         # Fallback brightness % (10-100)
+CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=50         # Fixed brightness % (10-100, default: 50)
 CONFIG_PROSPECTOR_ROTATE_DISPLAY_180=n        # Display orientation
 CONFIG_PROSPECTOR_MAX_LAYERS=7                # Layer display range (0-6 default, max 10)
 
@@ -338,8 +341,8 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y  # For split keyboards
 # ========================================
 # Smart power management
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-# 10Hz when typing (fast response)
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
+# 5Hz when typing (fast response, better battery)
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=200
 # 0.1Hz when idle (battery save)
 CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=10000
 # 2 minutes to idle mode
@@ -414,7 +417,7 @@ CONFIG_ZMK_LOG_LEVEL_DBG=y
 - **Scanner Device**: USB powered, no battery concerns
 
 ### Update Latency
-- **Key Press Response**: <200ms (5Hz active mode)
+- **Key Press Response**: <1000ms (5Hz active mode in v1.0.0)
 - **Layer Changes**: Immediate (next advertisement)
 - **Battery Updates**: 1-5 seconds depending on activity
 - **Connection Changes**: 1-2 seconds
@@ -479,6 +482,7 @@ This project uses the **Prospector** hardware design:
 - [x] **Split keyboard unified display** with both sides' battery info
 
 ### Planned Features 🚧
+- [ ] **APDS9960 ambient light sensor** for automatic brightness adjustment
 - [ ] **Advanced power profiling** with machine learning-based predictions
 - [ ] **Custom themes** and color scheme support
 - [ ] **Web configuration** interface via USB/BLE
@@ -486,6 +490,7 @@ This project uses the **Prospector** hardware design:
 - [ ] **Caps Word and Num Lock** status indicators
 
 ### Hardware Roadmap
+- [ ] **Battery operation** with USB-C charging support
 - [ ] **Wireless charging** support for battery operation
 - [ ] **E-ink display** variant for ultra-low power
 - [ ] **Compact form factor** with smaller displays
