@@ -6,7 +6,22 @@
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
 
-**Prospector Scanner** is an independent BLE status display device for ZMK keyboards. It provides real-time monitoring of keyboard status including battery levels, active layers, modifier keys, and connection states without interfering with your keyboard's normal connectivity.
+## 🔍 **What is Prospector?**
+
+**Prospector** is a community-developed hardware platform designed for ZMK keyboard enhancement and monitoring. Originally created as a universal dongle solution, Prospector has evolved into multiple specialized modes:
+
+- **🎯 Original Prospector**: Universal ZMK keyboard dongle for USB/wireless connectivity
+  - **Hardware Platform**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD display
+  - **Community Project**: Multiple implementations and variants across the ZMK ecosystem
+  - **Open Source**: MIT licensed hardware design with 3D-printable case
+  - **Find Prospector Projects**: [GitHub Search - "prospector zmk"](https://github.com/search?q=prospector+zmk&type=repositories)
+
+- **📱 This Project (Prospector Scanner)**: Advanced status monitoring system
+  - Independent BLE scanner mode using Prospector hardware
+  - Professional YADS-style UI for real-time keyboard monitoring
+  - Non-intrusive design that preserves full ZMK keyboard connectivity
+
+**Prospector Scanner** transforms the Prospector hardware into an independent BLE status display device for ZMK keyboards. It provides real-time monitoring of keyboard status including battery levels, active layers, modifier keys, and connection states without interfering with your keyboard's normal connectivity.
 
 ## 🎯 Key Features
 
@@ -62,7 +77,7 @@
 ## 🛠️ Hardware Requirements
 
 ### Scanner Device (Prospector Hardware)
-This project uses the **Prospector** hardware design as the base platform:
+This project uses the **Prospector** hardware platform described above:
 
 - **MCU**: [Seeeduino XIAO BLE](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html) (nRF52840)
 - **Display**: Waveshare 1.69" Round LCD (ST7789V, 240x280 pixels)
