@@ -334,6 +334,11 @@ CONFIG_LV_FONT_UNSCII_8=y                     # Small labels
 CONFIG_LV_FONT_UNSCII_16=y                    # Retro font (optional)
 
 # ========================================
+# SCANNER BEHAVIOR SETTINGS
+# ========================================
+CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS=300000   # Keyboard timeout (default: 5min, range: 10s-10min)
+
+# ========================================
 # PERFORMANCE & DEBUGGING
 # ========================================
 # CONFIG_LOG=y                                # Enable logging
