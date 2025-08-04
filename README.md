@@ -299,8 +299,11 @@ Bit 3: Left GUI     Bit 7: Right GUI
 
 ### Display Brightness
 - **Fixed Brightness**: Configurable brightness level (10-100%)
-- **Auto-Brightness**: Planned feature using APDS9960 sensor (not currently working)
-- **Default**: 80% brightness provides good visibility in most conditions
+- **Auto-Brightness**: Automatic adjustment using APDS9960 ambient light sensor
+  - Non-linear response curve for perceptual brightness
+  - Configurable min/max brightness levels
+  - Indoor-optimized range (0-5000 ADC units)
+- **Default**: 50% fixed brightness or auto-brightness when sensor enabled
 
 ## 🔧 Configuration Options
 
@@ -310,13 +313,16 @@ Bit 3: Left GUI     Bit 7: Right GUI
 # CORE SCANNER FEATURES
 # ========================================
 CONFIG_PROSPECTOR_MODE_SCANNER=y
-# CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y  # Auto-brightness (planned feature - currently disabled)
+CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y  # Auto-brightness with APDS9960
 CONFIG_PROSPECTOR_MAX_KEYBOARDS=3             # Multi-keyboard support (1-3)
 
 # ========================================
 # DISPLAY SETTINGS
 # ========================================
-CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=50         # Fixed brightness % (10-100, default: 50)
+# CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=50       # Fixed brightness % (when ALS disabled)
+CONFIG_PROSPECTOR_ALS_MIN_BRIGHTNESS=10       # Min auto-brightness % (5-50, default: 10)
+CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS=100      # Max auto-brightness % (50-100, default: 100)
+CONFIG_PROSPECTOR_ALS_UPDATE_INTERVAL_MS=2000 # ALS update rate (500-10000ms, default: 2000)
 CONFIG_PROSPECTOR_ROTATE_DISPLAY_180=n        # Display orientation
 CONFIG_PROSPECTOR_MAX_LAYERS=7                # Layer display range (0-6 default, max 10)
 
