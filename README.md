@@ -302,12 +302,13 @@ CONFIG_PROSPECTOR_MODE_SCANNER=y
 CONFIG_PROSPECTOR_MAX_KEYBOARDS=3
 
 # ========================================
-# BATTERY SUPPORT (v1.1.0)
+# BATTERY SUPPORT (v1.1.0 - Optional)
 # ========================================
-CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
-CONFIG_ZMK_BATTERY_REPORTING=y
-CONFIG_USB_DEVICE_STACK=y
-CONFIG_PROSPECTOR_BATTERY_UPDATE_INTERVAL_S=120  # 2 minutes
+# ⚠️  DISABLED BY DEFAULT - See "Battery Operation Setup" section below
+# CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
+# CONFIG_ZMK_BATTERY_REPORTING=y
+# CONFIG_USB_DEVICE_STACK=y
+# CONFIG_PROSPECTOR_BATTERY_UPDATE_INTERVAL_S=120  # 2 minutes
 
 # ========================================
 # DISPLAY SETTINGS (v1.1.0 Enhanced)
@@ -365,6 +366,94 @@ CONFIG_LV_FONT_UNSCII_8=y
 CONFIG_LV_FONT_UNSCII_16=y
 ```
 
+## 🔋 Battery Operation Setup
+
+### 🔌 USB-Only Operation (Default)
+
+**Prospector Scanner works perfectly without battery hardware.** By default, the scanner is configured for USB-only operation:
+
+- ✅ **Always powered**: Stable power from USB
+- ✅ **Simple setup**: No additional hardware needed
+- ✅ **Lower cost**: No battery purchase required
+- ✅ **Maintenance-free**: No battery charging management
+
+### 🔋 Battery Operation (Optional)
+
+If you want portable operation, follow these steps to enable battery support:
+
+#### Hardware Requirements
+- **Battery**: 400-600mAh LiPo battery with JST connector
+- **Connection**: Connect to BAT+ and BAT- pins on Seeeduino XIAO BLE
+- **Charging**: USB-C port provides automatic charging when connected
+
+#### Software Configuration
+
+**Step 1: Enable Battery Support in Scanner Config**
+Edit `config/prospector_scanner.conf` and uncomment the following lines:
+
+```kconfig
+# Enable battery support
+CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
+CONFIG_ZMK_BATTERY_REPORTING=y
+CONFIG_USB_DEVICE_STACK=y
+
+# Battery update interval (2 minutes)
+CONFIG_PROSPECTOR_BATTERY_UPDATE_INTERVAL_S=120
+
+# Optional: Show percentage and position
+CONFIG_PROSPECTOR_BATTERY_SHOW_PERCENTAGE=y
+CONFIG_PROSPECTOR_BATTERY_WIDGET_POSITION="TOP_RIGHT"
+```
+
+**Step 2: Rebuild and Flash**
+- Rebuild the scanner firmware with battery support enabled
+- Flash the new firmware to your scanner device
+
+**Step 3: Verify Battery Operation**
+- Connect battery hardware
+- Power on without USB - scanner should boot from battery
+- Battery level widget should appear in top-right corner
+- USB charging indicator shows when USB is connected
+
+#### Battery Management Features
+
+When battery support is enabled, you get:
+
+- 📊 **Real-time Battery Level**: Percentage display in top-right corner
+- ⚡ **Charging Indicator**: Shows charging status when USB connected  
+- 🔋 **Power-Aware Brightness**: Lower max brightness on battery vs USB
+- 💾 **Activity-Based Power Saving**: Dims display when keyboards idle
+- 🔄 **Automatic Detection**: Works with or without battery hardware
+
+#### Power Consumption
+
+- **Active Mode**: 6-8 hours typical usage (bright display, frequent updates)
+- **Idle Mode**: 12-16 hours (dimmed display, reduced update frequency)
+- **Mixed Usage**: 8-12 hours typical daily use
+- **Charging**: 2-3 hours from empty to full via USB-C
+
+#### Recommended Battery Settings
+
+```kconfig
+# Optimized for battery life
+CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_BATTERY=50  # 50% max on battery
+CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_USB=90      # 90% max on USB
+CONFIG_PROSPECTOR_SCANNER_IDLE_BRIGHTNESS_PERCENT=20  # 20% when idle
+
+# Faster display dimming for power saving
+CONFIG_PROSPECTOR_SCANNER_IDLE_BRIGHTNESS_MS=120000  # 2 minutes
+CONFIG_PROSPECTOR_ADVERTISEMENT_FREQUENCY_DIM=y     # Frequency-based dimming
+```
+
+### 🛠️ Troubleshooting Battery Issues
+
+| Issue | Solution |
+|-------|----------|
+| **No Battery Widget** | • Verify CONFIG_PROSPECTOR_BATTERY_SUPPORT=y<br>• Check battery connection<br>• Ensure ZMK_BATTERY_REPORTING=y |
+| **0% Battery Display** | • Check JST connector polarity<br>• Verify battery voltage (>3.0V)<br>• Try different battery |
+| **No Charging** | • Check USB-C cable and connection<br>• Battery may be over-discharged<br>• Try leaving plugged for 30+ minutes |
+| **Short Battery Life** | • Reduce max brightness settings<br>• Enable idle dimming<br>• Check for stuck-on backlight |
+
 ## 🐛 Troubleshooting
 
 ### Scanner Issues
@@ -373,7 +462,7 @@ CONFIG_LV_FONT_UNSCII_16=y
 |---------|----------|----------|
 | **No Display** | Black screen | • Check USB power<br>• Verify display wiring<br>• Reflash firmware |
 | **"Scanning..." Forever** | No keyboards detected | • Check keyboard CONFIG_ZMK_STATUS_ADVERTISEMENT=y<br>• Verify keyboard power<br>• Use BLE scanner app |
-| **No Scanner Battery** | Widget not shown | • Ensure battery connected<br>• Enable CONFIG_PROSPECTOR_BATTERY_SUPPORT=y<br>• Check battery voltage |
+| **No Scanner Battery** | Widget not shown | • See "Battery Operation Setup" section<br>• Enable CONFIG_PROSPECTOR_BATTERY_SUPPORT=y<br>• Check battery hardware connection |
 | **Dim Display** | Too dark/bright | • Adjust ALS_SENSOR_THRESHOLD<br>• Check APDS9960 wiring<br>• Try fixed brightness mode |
 
 ### Keyboard Issues
