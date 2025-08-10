@@ -85,7 +85,7 @@
 - **MCU**: [Seeeduino XIAO BLE](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html) (nRF52840)
 - **Display**: Waveshare 1.69" Round LCD (ST7789V, 240x280 pixels)
 - **Light Sensor**: Adafruit APDS9960 ambient light sensor (optional, for auto-brightness)
-- **Battery**: 400-600mAh LiPo battery (optional, for portable operation)
+- **Battery**: 702030 size (350mAh) recommended, or 772435 size (600mAh) tight fit (optional, for portable operation)
 - **Power**: USB Type-C (5V) or battery
 - **Case**: 3D printed Prospector enclosure
 
@@ -382,7 +382,9 @@ CONFIG_LV_FONT_UNSCII_16=y
 If you want portable operation, follow these steps to enable battery support:
 
 #### Hardware Requirements
-- **Battery**: 400-600mAh LiPo battery with JST connector
+- **Recommended Battery**: 702030 size (350mAh) - fits perfectly in Prospector case
+- **Alternative**: 772435 size (600mAh) - fits but tight clearance
+- **Connector**: Standard JST connector (red=positive, black=negative)
 - **Connection**: Connect to BAT+ and BAT- pins on Seeeduino XIAO BLE
 - **Charging**: USB-C port provides automatic charging when connected
 
@@ -425,12 +427,13 @@ When battery support is enabled, you get:
 - 💾 **Activity-Based Power Saving**: Dims display when keyboards idle
 - 🔄 **Automatic Detection**: Works with or without battery hardware
 
-#### Power Consumption
+#### Power Consumption (350mAh Battery)
 
-- **Active Mode**: 6-8 hours typical usage (bright display, frequent updates)
-- **Idle Mode**: 12-16 hours (dimmed display, reduced update frequency)
-- **Mixed Usage**: 8-12 hours typical daily use
-- **Charging**: 2-3 hours from empty to full via USB-C
+- **Active Mode**: 4-6 hours typical usage (bright display, frequent updates)
+- **Idle Mode**: 8-12 hours (dimmed display, reduced update frequency)  
+- **Mixed Usage**: 6-8 hours typical daily use
+- **Charging**: 1.5-2 hours from empty to full via USB-C
+- **600mAh Battery**: Add 60-70% to above times for larger battery option
 
 #### Recommended Battery Settings
 
@@ -450,7 +453,7 @@ CONFIG_PROSPECTOR_ADVERTISEMENT_FREQUENCY_DIM=y     # Frequency-based dimming
 | Issue | Solution |
 |-------|----------|
 | **No Battery Widget** | • Verify CONFIG_PROSPECTOR_BATTERY_SUPPORT=y<br>• Check battery connection<br>• Ensure ZMK_BATTERY_REPORTING=y |
-| **0% Battery Display** | • Check JST connector polarity<br>• Verify battery voltage (>3.0V)<br>• Try different battery |
+| **0% Battery Display** | • Check JST connector polarity (red=+, black=-)<br>• Verify battery voltage (>3.0V)<br>• Try different battery<br>• Recommended: 702030 (350mAh) |
 | **No Charging** | • Check USB-C cable and connection<br>• Battery may be over-discharged<br>• Try leaving plugged for 30+ minutes |
 | **Short Battery Life** | • Reduce max brightness settings<br>• Enable idle dimming<br>• Check for stuck-on backlight |
 
