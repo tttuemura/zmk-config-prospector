@@ -116,17 +116,23 @@ GND -> GND
 
 ## 📦 Installation Guide
 
-### Step 1: Build Scanner Firmware
+### Step 1: Get Scanner Firmware
 
-#### Option A: GitHub Actions (Recommended)
+#### Option A: Download Pre-Built (Easiest)
+📥 **[Download v1.1.0 Release](https://github.com/t-ogura/zmk-config-prospector/releases/tag/v1.1.0)**
+- `prospector-scanner-v1.1.0.uf2` - Scanner mode firmware
+- `prospector-adapter-v1.1.0.uf2` - Legacy adapter mode firmware
+- Simply download and flash to your Seeeduino XIAO BLE
+
+#### Option B: Build Your Own (Recommended for Customization)
 1. Fork this repository: `https://github.com/t-ogura/zmk-config-prospector`
    - Use the `main` branch for stable v1.1.0 release
 2. Enable GitHub Actions in your fork
 3. Push any commit to trigger automated build
-4. Download `prospector-scanner-firmware.zip` from Actions artifacts
-5. Extract and flash `zmk.uf2` to your Seeeduino XIAO BLE
+4. Download `zmk.uf2` from your Actions artifacts
+5. Flash to your Seeeduino XIAO BLE
 
-#### Option B: Local Build
+#### Option C: Local Build
 ```bash
 # Clone repository (main branch for v1.1.0)
 git clone https://github.com/t-ogura/zmk-config-prospector
