@@ -120,8 +120,8 @@ GND -> GND
 
 #### Option A: Download Pre-Built (Easiest)
 📥 **[Download v1.1.0 Release](https://github.com/t-ogura/zmk-config-prospector/releases/tag/v1.1.0)**
-- `prospector-scanner-v1.1.0.uf2` - Scanner mode firmware
-- `prospector-adapter-v1.1.0.uf2` - Legacy adapter mode firmware
+- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - Scanner mode firmware
+- `settings_reset-seeeduino_xiao_ble-zmk.uf2` - Settings reset firmware
 - Simply download and flash to your Seeeduino XIAO BLE
 
 #### Option B: Build Your Own (Recommended for Customization)
