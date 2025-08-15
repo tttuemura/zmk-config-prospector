@@ -12,10 +12,11 @@
 **Prospector** is a community-developed hardware platform designed for ZMK keyboard enhancement and monitoring. Originally created as a universal dongle solution, Prospector has evolved into multiple specialized modes:
 
 - **🎯 Original Prospector**: Universal ZMK keyboard dongle for USB/wireless connectivity
+  - **Original Project**: [prospector](https://github.com/carrefinho/prospector) by carrefinho
+  - **Original Firmware**: [prospector-zmk-module](https://github.com/carrefinho/prospector-zmk-module)
   - **Hardware Platform**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD display
   - **Community Project**: Multiple implementations and variants across the ZMK ecosystem
   - **Open Source**: MIT licensed hardware design with 3D-printable case
-  - **Find Prospector Projects**: [GitHub Search - "prospector zmk"](https://github.com/search?q=prospector+zmk&type=repositories)
 
 - **📱 This Project (Prospector Scanner)**: Advanced status monitoring system
   - Independent BLE scanner mode using Prospector hardware
