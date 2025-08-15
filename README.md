@@ -185,14 +185,14 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 CONFIG_ZMK_BATTERY_REPORTING=y
 
 # ========================================
-# POWER OPTIMIZATION (v1.1.0 Recommended)
+# POWER OPTIMIZATION (v1.1.0 Enhanced - 15x improvement from v1.0)
 # ========================================
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-# 10Hz when typing (ultra-responsive)
+# 10Hz when typing (ultra-responsive, was 0.5Hz in v1.0)
 CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
-# 0.03Hz when idle (battery saver)
+# 0.03Hz when idle (major battery savings, was 0.5Hz in v1.0)
 CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000
-# 10 seconds before idle mode
+# 10 seconds before idle mode (configurable)
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000
 
 # ========================================
@@ -201,6 +201,17 @@ CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000
 # Specify which side is the central device (default: RIGHT)
 # Set to "LEFT" if your central device is on the left side
 # CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"
+
+# ========================================
+# WPM TRACKING CONFIGURATION (v1.1.0 New)
+# ========================================
+# Configure WPM calculation window (default: 30 seconds)
+# Ultra-responsive: 10s window (6x multiplier)
+# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=10
+# Balanced: 30s window (2x multiplier) - DEFAULT
+# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=30
+# Traditional: 60s window (1x multiplier)
+# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=60
 
 # ========================================
 # DISPLAY CUSTOMIZATION (Optional)
@@ -588,11 +599,14 @@ CONFIG_ZMK_STATUS_ADVERTISEMENT=y
 CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Corne"
 CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 
-# v1.1.0 power optimization
+# v1.1.0 enhanced power optimization (15x improvement from v1.0)
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # 10Hz active
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000    # 30s idle
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # 10Hz active (was 0.5Hz)
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000    # 0.03Hz idle (was 0.5Hz)
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000 # 10s timeout
+
+# WPM tracking (v1.1.0 new feature)
+CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=30     # 30s window (configurable)
 
 # If central is on left side (uncommon)
 # CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"
@@ -627,14 +641,16 @@ CONFIG_PROSPECTOR_MAX_LAYERS=10
 
 ### v1.1.0 (2025-08-08)
 - ✨ Scanner battery support with real-time monitoring
-- ✨ APDS9960 ambient light sensor integration
+- ✨ APDS9960 ambient light sensor integration (enabled by default)
 - ✨ USB/Battery separate brightness profiles
-- ✨ Enhanced power management (30s idle intervals)
-- ✨ Improved WPM calculation with decay algorithm
+- ✨ Enhanced power management (30s idle intervals vs 2s in v1.0)
+- ✨ Improved WPM calculation with configurable window (5-120s)
+- ✨ Enhanced RX rate display with 10-sample smoothing and accurate IDLE detection
 - 🐛 Fixed scanner battery update stuck at 23%
+- 🐛 Fixed RX showing 5Hz during IDLE mode (now shows actual 0.03Hz)
 - 🐛 Fixed display timeout and reset issues
 - 🔧 Removed debug features for production
-- 📚 Comprehensive documentation update
+- 📚 Comprehensive documentation update with battery specifications
 
 ### v1.0.0 (2025-01-29)
 - 🎉 Initial stable release
