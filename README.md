@@ -1,3 +1,11 @@
+> ⚠️ **Important Notice (Aug 2025)**
+>
+> The release **v1.1.0** contains an incorrect I²C pin mapping and may not work
+> with the original Prospector wiring.  
+> Please use **v1.0.0** until this issue is fixed in the upcoming **v1.1.1** release.  
+>
+> Details: [Issue #1](https://github.com/t-ogura/zmk-config-prospector/issues/1)
+
 # Prospector Scanner - ZMK Status Display Device
 
 <p align="center">
