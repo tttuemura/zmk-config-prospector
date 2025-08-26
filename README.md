@@ -1,14 +1,16 @@
-> ⚠️ **Important Notice (Aug 2025)**
+> 🚨 **CRITICAL UPDATE: v1.1.1 Available Now! (Aug 26, 2025)**
 >
-> We have received reports that **v1.1.0** may not work correctly in some setups.  
-> For now, we recommend using **v1.0.0** until the upcoming **v1.1.1** release,  
-> which will address these issues.
+> **URGENT FIX**: v1.1.0 startup failures for users without APDS9960 sensor hardware have been resolved.
+> 
+> **✅ SAFE TO UPGRADE**: v1.1.1 includes automatic hardware detection and graceful fallback modes.
+> 
+> 👉 **[See detailed upgrade instructions →](docs/RELEASES.md#v111---critical-safety-update-2025-08-26)**
 
 # Prospector Scanner - ZMK Status Display Device
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.1.0-brightgreen" alt="Version 1.1.0">
-  <img src="https://img.shields.io/badge/status-stable-green" alt="Stable Status">
+  <img src="https://img.shields.io/badge/version-v1.1.1-critical-red" alt="Version 1.1.1 Critical Fix">
+  <img src="https://img.shields.io/badge/status-production%20ready-brightgreen" alt="Production Ready">
   <img src="https://img.shields.io/badge/ZMK-compatible-blue" alt="ZMK Compatible">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
@@ -28,7 +30,7 @@
   - Independent BLE scanner mode using Prospector hardware
   - Professional YADS-style UI for real-time keyboard monitoring
   - Non-intrusive design that preserves full ZMK keyboard connectivity
-  - **v1.1.0**: Scanner battery support, enhanced power management, improved stability
+  - **v1.1.1**: Critical safety fixes, automatic hardware detection, startup failure resolution
 
 **Prospector Scanner** transforms the Prospector hardware into an independent BLE status display device for ZMK keyboards. It provides real-time monitoring of keyboard status including battery levels, active layers, modifier keys, and connection states without interfering with your keyboard's normal connectivity.
 
@@ -41,7 +43,7 @@
 - **Real-time Updates**: Instant response to keyboard state changes with sub-second latency
 - **WPM Tracking**: Real-time Words Per Minute calculation with intelligent decay during idle periods
 
-### 🔋 **Smart Power Management** (v1.1.0 Enhanced)
+### 🔋 **Smart Power Management** (v1.1.1 Enhanced)
 - **Activity-Based Intervals**: 10Hz (100ms) when typing, 0.03Hz (30s) when idle (improved from v1.0.0)
 - **Automatic Transitions**: Seamless switching between active/idle states with configurable timeouts
 - **WPM-Aware Updates**: Higher frequency during active typing sessions with decay algorithm
