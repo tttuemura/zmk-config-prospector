@@ -88,6 +88,7 @@ west build --pristine
 2. **Black screen on startup** → ✅ Fixed with safe fallback mode  
 3. **I2C initialization failures** → ✅ Fixed with conditional compilation
 4. **Kconfig circular dependencies** → ✅ Fixed with restructured dependencies
+5. **Boot failure on sensor-less devices** → ✅ Fixed by removing I2C force-enable from board overlay (commit 2d4caae)
 
 ### ⚠️ **Breaking Changes**
 
