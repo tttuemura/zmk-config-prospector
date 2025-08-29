@@ -113,7 +113,7 @@ LCD_RST  -> Pin 3  (Reset)
 LCD_BL   -> Pin 6  (Backlight PWM)
 ```
 
-### APDS9960 Wiring (v1.1.0)
+### APDS9960 Wiring (v1.1.1)
 ```
 SDA -> Pin D4
 SCL -> Pin D5
@@ -132,14 +132,14 @@ GND -> GND
 ### Step 1: Get Scanner Firmware
 
 #### Option A: Download Pre-Built (Easiest)
-📥 **[Download v1.1.0 Release](https://github.com/t-ogura/zmk-config-prospector/releases/tag/v1.1.0)**
+📥 **[Download v1.1.1 Release](https://github.com/t-ogura/zmk-config-prospector/releases/tag/v1.1.1)**
 - `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - Scanner mode firmware
 - `settings_reset-seeeduino_xiao_ble-zmk.uf2` - Settings reset firmware
 - Simply download and flash to your Seeeduino XIAO BLE
 
 #### Option B: Build Your Own (Recommended for Customization)
 1. Fork this repository: `https://github.com/t-ogura/zmk-config-prospector`
-   - Use the `main` branch for stable v1.1.0 release
+   - Use the `main` branch for stable v1.1.1 release
 2. Enable GitHub Actions in your fork
 3. Push any commit to trigger automated build
 4. Download `zmk.uf2` from your Actions artifacts
@@ -147,7 +147,7 @@ GND -> GND
 
 #### Option C: Local Build
 ```bash
-# Clone repository (main branch for v1.1.0)
+# Clone repository (main branch for v1.1.1)
 git clone https://github.com/t-ogura/zmk-config-prospector
 cd zmk-config-prospector
 git checkout main
@@ -180,7 +180,7 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: v1.1.0
+      revision: v1.1.1
       path: modules/prospector-zmk-module
 ```
 
@@ -205,7 +205,7 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 CONFIG_ZMK_BATTERY_REPORTING=y
 
 # ========================================
-# POWER OPTIMIZATION (v1.1.0 Enhanced - 15x improvement from v1.0)
+# POWER OPTIMIZATION (v1.1.1 Enhanced - 15x improvement from v1.0)
 # ========================================
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
 # 10Hz when typing (ultra-responsive, was 0.5Hz in v1.0)
@@ -223,7 +223,7 @@ CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000
 # CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"
 
 # ========================================
-# WPM TRACKING CONFIGURATION (v1.1.0 New)
+# WPM TRACKING CONFIGURATION (v1.1.1 New)
 # ========================================
 # Configure WPM calculation window (default: 30 seconds)
 # Ultra-responsive: 10s window (6x multiplier)
@@ -259,7 +259,7 @@ CONFIG_PROSPECTOR_MAX_LAYERS=7
 1. **Scanner Display**: Shows "Initializing..." then "Scanning..."
 2. **Keyboard Detection**: Scanner displays keyboard name within 5 seconds
 3. **Status Updates**: Battery, layer, WPM update in real-time
-4. **Scanner Battery**: If battery connected, shows level in top-right (v1.1.0)
+4. **Scanner Battery**: If battery connected, shows level in top-right (v1.1.1)
 
 ## 📊 Protocol Specification
 
@@ -286,10 +286,10 @@ CONFIG_PROSPECTOR_MAX_LAYERS=7
 
 ## 🎨 Display Features
 
-### Widget Layout (v1.1.0)
+### Widget Layout (v1.1.1)
 ```
 ┌─────────────────────────────┐
-│ 🔋85%  Device Name          │ ← Scanner battery (v1.1.0)
+│ 🔋85%  Device Name          │ ← Scanner battery (v1.1.1)
 │                    USB [P0] │ ← Connection status
 │                             │
 │ WPM                    RX   │ ← WPM + Signal info
@@ -314,9 +314,9 @@ CONFIG_PROSPECTOR_MAX_LAYERS=7
   - 🔴 **<20%**: Red (#FF3333)
 - **Layer Colors**: 7-10 unique pastel colors, configurable count
 - **WPM Display**: Real-time with decay algorithm
-- **Scanner Battery**: Top-right with charging indicator (v1.1.0)
+- **Scanner Battery**: Top-right with charging indicator (v1.1.1)
 
-### Display Brightness (v1.1.0 Enhanced)
+### Display Brightness (v1.1.1 Enhanced)
 - **Auto-Brightness**: APDS9960 sensor with non-linear response
 - **USB/Battery Profiles**: Different max brightness for each power source
 - **Activity-Based Dimming**: Automatic reduction when keyboards idle
@@ -333,7 +333,7 @@ CONFIG_PROSPECTOR_MODE_SCANNER=y
 CONFIG_PROSPECTOR_MAX_KEYBOARDS=3
 
 # ========================================
-# BATTERY SUPPORT (v1.1.0 - Optional)
+# BATTERY SUPPORT (v1.1.1 - Optional)
 # ========================================
 # ⚠️  DISABLED BY DEFAULT - See "Battery Operation Setup" section below
 # CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
@@ -342,7 +342,7 @@ CONFIG_PROSPECTOR_MAX_KEYBOARDS=3
 # CONFIG_PROSPECTOR_BATTERY_UPDATE_INTERVAL_S=120  # 2 minutes
 
 # ========================================
-# DISPLAY SETTINGS (v1.1.0 Enhanced)
+# DISPLAY SETTINGS (v1.1.1 Enhanced)
 # ========================================
 # Auto-brightness with APDS9960
 CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y
@@ -364,7 +364,7 @@ CONFIG_PROSPECTOR_ALS_UPDATE_INTERVAL_MS=2000   # 2 second updates
 CONFIG_PROSPECTOR_ALS_SENSOR_THRESHOLD=200      # Indoor-optimized
 
 # ========================================
-# POWER SAVING FEATURES (v1.1.0)
+# POWER SAVING FEATURES (v1.1.1)
 # ========================================
 # Scanner timeout (8 minutes default)
 CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS=480000
@@ -504,7 +504,7 @@ CONFIG_PROSPECTOR_ADVERTISEMENT_FREQUENCY_DIM=y     # Frequency-based dimming
 | Problem | Symptoms | Solution |
 |---------|----------|----------|
 | **No Advertisement** | Scanner can't find | • Add CONFIG_ZMK_STATUS_ADVERTISEMENT=y<br>• Set activity-based intervals<br>• Check BLE is enabled |
-| **High Battery Drain** | Fast discharge | • Enable activity-based mode<br>• Increase idle interval to 30000ms<br>• Use v1.1.0 power settings |
+| **High Battery Drain** | Fast discharge | • Enable activity-based mode<br>• Increase idle interval to 30000ms<br>• Use v1.1.1 power settings |
 | **Wrong Battery Side** | L/R swapped | • Set CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"<br>• Default is "RIGHT" |
 
 ### Debug Tools
@@ -515,7 +515,7 @@ Use **nRF Connect** (Android/iOS):
 2. Check manufacturer data: `FF FF AB CD`
 3. Verify update intervals match config
 
-#### Scanner Debug (v1.1.0)
+#### Scanner Debug (v1.1.1)
 ```kconfig
 # Enable debug logging
 CONFIG_LOG=y
@@ -527,14 +527,14 @@ CONFIG_PROSPECTOR_DEBUG_WIDGET=y
 
 ## 📈 Performance Characteristics
 
-### Power Consumption (v1.1.0 Optimized)
+### Power Consumption (v1.1.1 Optimized)
 - **Keyboard Active**: +20-30% battery (100ms intervals)
 - **Keyboard Idle**: +10-15% battery (30s intervals)
 - **Scanner on Battery**: 8-12 hours typical operation
 - **Scanner on USB**: Unlimited with charging
 
 ### Update Latency
-- **Key Press Response**: <200ms (10Hz in v1.1.0)
+- **Key Press Response**: <200ms (10Hz in v1.1.1)
 - **Layer Changes**: Immediate
 - **Battery Updates**: 2 minutes (configurable)
 - **WPM Updates**: Real-time with decay
@@ -571,7 +571,7 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 
 ## 🚀 Future Enhancements
 
-### Completed in v1.1.0 ✅
+### Completed in v1.1.1 ✅
 - [x] Scanner battery support with charging indicator
 - [x] APDS9960 ambient light sensor integration
 - [x] USB/Battery separate brightness profiles
@@ -612,20 +612,20 @@ west build -s zmk/app -b seeeduino_xiao_ble -- -DSHIELD=prospector_scanner
 
 ## 💡 Quick Setup Examples
 
-### Split Keyboard (v1.1.0 Optimized)
+### Split Keyboard (v1.1.1 Optimized)
 ```kconfig
 # Corne, Lily58, Sofle, etc.
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
 CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Corne"
 CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 
-# v1.1.0 enhanced power optimization (15x improvement from v1.0)
+# v1.1.1 enhanced power optimization (15x improvement from v1.0)
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
 CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # 10Hz active (was 0.5Hz)
 CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000    # 0.03Hz idle (was 0.5Hz)
 CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000 # 10s timeout
 
-# WPM tracking (v1.1.0 new feature)
+# WPM tracking (v1.1.1 new feature)
 CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=30     # 30s window (configurable)
 
 # If central is on left side (uncommon)
@@ -659,7 +659,7 @@ CONFIG_PROSPECTOR_MAX_LAYERS=10
 
 ## 📚 Version History
 
-### v1.1.0 (2025-08-08)
+### v1.1.1 (2025-08-08)
 - ✨ Scanner battery support with real-time monitoring
 - ✨ APDS9960 ambient light sensor integration (enabled by default)
 - ✨ USB/Battery separate brightness profiles
@@ -682,6 +682,6 @@ CONFIG_PROSPECTOR_MAX_LAYERS=10
 
 ---
 
-**Prospector Scanner v1.1.0** - Making ZMK keyboard status visible, beautiful, and battery-efficient.
+**Prospector Scanner v1.1.1** - Making ZMK keyboard status visible, beautiful, and battery-efficient.
 
 Built with ❤️ by the ZMK community.
