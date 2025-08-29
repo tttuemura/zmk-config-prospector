@@ -659,7 +659,7 @@ CONFIG_PROSPECTOR_MAX_LAYERS=10
 
 ## 📚 Version History
 
-### v1.1.1 (2025-08-08)
+### v1.1.1 (2025-08-29)
 - ✨ Scanner battery support with real-time monitoring
 - ✨ APDS9960 ambient light sensor integration (enabled by default)
 - ✨ USB/Battery separate brightness profiles
@@ -672,7 +672,7 @@ CONFIG_PROSPECTOR_MAX_LAYERS=10
 - 🔧 Removed debug features for production
 - 📚 Comprehensive documentation update with battery specifications
 
-### v1.0.0 (2025-01-29)
+### v1.0.0 (2025-08-03)
 - 🎉 Initial stable release
 - ✨ YADS-style UI with pastel colors
 - ✨ Multi-keyboard support

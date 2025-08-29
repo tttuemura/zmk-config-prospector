@@ -1,6 +1,6 @@
 # Prospector Scanner v1.1.0 Release Notes
 
-**Release Date**: 2025-08-06  
+**Release Date**: 2025-08-15  
 **Version**: 1.1.0  
 **Codename**: "Enhanced Experience"  
 **Status**: Stable Release  

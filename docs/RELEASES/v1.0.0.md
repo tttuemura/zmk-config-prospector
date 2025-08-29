@@ -1,6 +1,6 @@
 # Prospector Scanner v1.0.0 Release Notes
 
-**Release Date**: 2025-01-29  
+**Release Date**: 2025-08-03  
 **Version**: 1.0.0  
 **Codename**: "Initial Stable Release"  
 **Status**: Stable  

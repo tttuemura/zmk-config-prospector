@@ -7,8 +7,8 @@ This directory contains release notes for all versions of Prospector Scanner.
 | Version | Release Date | Status | Highlights |
 |---------|-------------|--------|------------|
 | [v1.1.1](v1.1.1.md) | 2025-08-29 | **Latest Stable** | Universal compatibility, 10-layer support, Device Tree fallback |
-| [v1.1.0](v1.1.0.md) | 2025-08-06 | Stable | 15x power optimization, battery support, ambient light sensor |
-| [v1.0.0](v1.0.0.md) | 2025-01-29 | Stable | Initial stable release with YADS-style UI |
+| [v1.1.0](v1.1.0.md) | 2025-08-15 | Stable | 15x power optimization, battery support, ambient light sensor |
+| [v1.0.0](v1.0.0.md) | 2025-08-03 | Stable | Initial stable release with YADS-style UI |
 
 ## Version Numbering
 
