@@ -1,15 +1,19 @@
-> 🚨 **CRITICAL UPDATE: v1.1.1 Available Now! (Aug 26, 2025)**
+> 🎉 **LATEST: v1.1.1 "Enhanced Experience" Released! (Aug 29, 2025)**
 >
-> **URGENT FIX**: v1.1.0 startup failures for users without APDS9960 sensor hardware have been resolved.
+> **✨ MAJOR ENHANCEMENTS**: Complete 10-layer support (0-9), dynamic centering, and breakthrough Device Tree fallback system.
 > 
-> **✅ SAFE TO UPGRADE**: v1.1.1 includes automatic hardware detection and graceful fallback modes.
+> **🔧 UNIVERSAL COMPATIBILITY**: Same firmware works perfectly with or without optional sensor hardware.
+>
+> **🔟 LAYER DISPLAY**: Full 0-9 layer support with intelligent centering (4 layers = wide spacing, 10 layers = tight fit).
 > 
-> 👉 **[See detailed upgrade instructions →](docs/RELEASES.md#v111---critical-safety-update-2025-08-26)**
+> **🌞 AMBIENT LIGHT**: APDS9960 integration with smooth 800ms fade transitions and failsafe operation.
+> 
+> 👉 **[See complete release notes →](RELEASE_NOTES_v1.1.1.md)**
 
 # Prospector Scanner - ZMK Status Display Device
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.1.1-critical-red" alt="Version 1.1.1 Critical Fix">
+  <img src="https://img.shields.io/badge/version-v1.1.1-brightgreen" alt="Version 1.1.1 Enhanced Experience">
   <img src="https://img.shields.io/badge/status-production%20ready-brightgreen" alt="Production Ready">
   <img src="https://img.shields.io/badge/ZMK-compatible-blue" alt="ZMK Compatible">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
@@ -30,7 +34,7 @@
   - Independent BLE scanner mode using Prospector hardware
   - Professional YADS-style UI for real-time keyboard monitoring
   - Non-intrusive design that preserves full ZMK keyboard connectivity
-  - **v1.1.1**: Critical safety fixes, automatic hardware detection, startup failure resolution
+  - **v1.1.1**: Universal hardware compatibility, 10-layer support, smart centering, smooth ambient light control
 
 **Prospector Scanner** transforms the Prospector hardware into an independent BLE status display device for ZMK keyboards. It provides real-time monitoring of keyboard status including battery levels, active layers, modifier keys, and connection states without interfering with your keyboard's normal connectivity.
 
@@ -57,12 +61,13 @@
 - **Multi-Keyboard**: Monitor up to 3 keyboards simultaneously
 - **No Pairing Required**: Uses BLE advertisements (observer mode)
 
-### 🌟 **New in v1.1.0**
-- **Scanner Battery Widget**: Displays scanner's own battery level and charging status
-- **Ambient Light Sensor**: Automatic brightness adjustment with APDS9960 (fully functional)
-- **Enhanced Power Profiles**: Separate USB/battery brightness settings
-- **Improved Split Display**: Configurable left/right battery positioning
-- **Production-Ready**: Optimized update intervals and removed debug features
+### 🌟 **New in v1.1.1 "Enhanced Experience"**
+- **🔟 Complete Layer Display**: Full 0-9 layer support (10 layers total) with dynamic smart centering
+- **🔧 Universal Hardware Compatibility**: Revolutionary Device Tree fallback - same firmware works with or without sensors
+- **🌞 APDS9960 Mastery**: Ambient light sensor with smooth 800ms fade transitions and comprehensive error handling
+- **⚙️ One-Click Configuration**: Single setting enables all sensor dependencies automatically
+- **🎯 Perfect Centering**: 4 layers = wide spacing, 10 layers = tight fit, always perfectly centered
+- **📊 Enhanced Accuracy**: Fixed update rate calculation for accurate Hz display during typing
 
 ## 🏗️ Architecture Overview
 
