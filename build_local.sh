@@ -14,14 +14,14 @@ echo "Config directory: ${CONFIG_DIR}"
 # Activate virtual environment
 source "${SCRIPT_DIR}/.venv/bin/activate"
 
-# Build the firmware
+# Build the firmware with USB logging enabled
 west build --pristine \
   -s zmk/app \
   -b seeeduino_xiao_ble \
-  -S zmk-usb-logging \
   -- \
   -DZMK_CONFIG="${CONFIG_DIR}" \
-  -DSHIELD=prospector_scanner
+  -DSHIELD=prospector_scanner \
+  -DSNIPPET="zmk-usb-logging"
 
 echo ""
 echo "=== Build Complete ===="
