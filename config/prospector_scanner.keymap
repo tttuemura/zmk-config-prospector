@@ -52,7 +52,7 @@ glidepoint: &touch_sensor {};
 // Configure tap-to-click gesture detection
 &zip_gestures {
     tap-detection;
-    tap-timeout-ms = <150>;      // 150ms tap timeout
+    tap-timout-ms = <150>;       // 150ms tap timeout (note: property name has typo in binding)
     prevent_movement_during_tap;
 };
 
