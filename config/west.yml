@@ -4,6 +4,12 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: prospector
       url-base: https://github.com/t-ogura
+    - name: halfdane
+      url-base: https://github.com/halfdane
+    - name: ssbb
+      url-base: https://github.com/ssbb
+    - name: kot149
+      url-base: https://github.com/kot149
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -11,7 +17,27 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: v1.1.1
+      revision: feature/v2.0-scanner-touch
       path: modules/prospector-zmk-module
+    # Input processors for absolute to relative coordinate conversion
+    - name: zmk-input-processors
+      remote: halfdane
+      revision: main
+      path: modules/zmk-input-processors
+    # Input gestures for tap-to-click and trackpad gestures
+    - name: zmk-input-gestures
+      remote: halfdane
+      revision: main
+      path: modules/zmk-input-gestures
+    # Listeners for layer-triggered events
+    - name: zmk-listeners
+      remote: ssbb
+      revision: v1
+      path: modules/zmk-listeners
+    # Mouse gesture recognition for touch gestures
+    - name: zmk-mouse-gesture
+      remote: kot149
+      revision: v1
+      path: modules/zmk-mouse-gesture
   self:
     path: config
