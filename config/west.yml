@@ -2,16 +2,46 @@ manifest:
   remotes:
     - name: zmkfirmware
       url-base: https://github.com/zmkfirmware
-    - name: prospector
-      url-base: https://github.com/t-ogura
+    - name: ssbb
+      url-base: https://github.com/ssbb
+    - name: halfdane
+      url-base: https://github.com/halfdane
+    - name: kot149
+      url-base: https://github.com/kot149
   projects:
     - name: zmk
       remote: zmkfirmware
       revision: main
       import: app/west.yml
-    - name: prospector-zmk-module
-      remote: prospector
-      revision: v1.1.1
-      path: modules/prospector-zmk-module
+
+    # https://github.com/kot149/prospector-scanner-zmk-module
+    - name: prospector-scanner-zmk-module
+      remote: kot149
+      revision: main
+      path: modules/prospector-scanner-zmk-module-kot149
+
+    # https://github.com/ssbb/zmk-listeners
+    - name: zmk-listeners
+      remote: ssbb
+      revision: v1
+      path: modules/zmk-listeners
+
+    # https://github.com/halfdane/zmk-input-processors
+    - name: zmk-input-processors
+      remote: halfdane
+      revision: main
+      path: modules/zmk-input-processors
+
+    # https://github.com/halfdane/zmk-input-gestures
+    - name: zmk-input-gestures
+      remote: halfdane
+      revision: main
+      path: modules/zmk-input-gestures
+
+    # https://github.com/kot149/zmk-mouse-gesture
+    - name: zmk-mouse-gesture
+      remote: kot149
+      revision: v1
+      path: modules/zmk-mouse-gesture
   self:
     path: config
