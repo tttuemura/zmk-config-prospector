@@ -17,7 +17,7 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: feature/v2.0-scanner-touch
+      revision: aed91f1fed3a8e8bb43cf11f8dde3ee47fbf382c
       path: modules/prospector-zmk-module
     # Input processors for absolute to relative coordinate conversion
     - name: zmk-input-processors
