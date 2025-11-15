@@ -17,7 +17,7 @@ manifest:
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: 70d217120e3f64c0c0e855918c6d6c679247be39  # v1.1.1 - battery support
+      revision: fix/battery-hardware-detection
       path: modules/prospector-zmk-module
     # Input processors for absolute to relative coordinate conversion
     - name: zmk-input-processors
