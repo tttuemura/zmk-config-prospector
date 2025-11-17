@@ -18,13 +18,11 @@
         default_layer {
             bindings = <&none>;
         };
-    };
 
-    // Layer listeners disabled - part of v2.0 Scanner Touch features
-    /*
-    // Mouse layer - auto-activated on cursor movement
-    mouse_layer {
-        bindings = <&none>;
+        // Mouse layer - auto-activated on cursor movement
+        mouse_layer {
+            bindings = <&none>;
+        };
     };
 
     // Layer listeners for auto-activating mouse gesture recognition
@@ -37,12 +35,8 @@
             bindings = <&mouse_gesture_on &mouse_gesture_off>;
         };
     };
-    */
 };
 
-// Touch panel configuration disabled for battery bug investigation
-// (v2.0 Scanner Touch features require CST816S hardware)
-/*
 // Include input processor modules
 #include <input/processors.dtsi>
 #include <dt-bindings/zmk/input_transform.h>
@@ -86,4 +80,3 @@ glidepoint: &touch_sensor {};
         &zip_mouse_gesture                                            // Gesture recognition
     >;
 };
-*/
