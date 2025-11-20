@@ -24,3 +24,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# Development files (keep locally, not in git)
+DYNAMIC_MEMORY_OPTIMIZATION.md
+build_local.sh
