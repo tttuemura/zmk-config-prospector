@@ -581,7 +581,7 @@ manifest:
     # Add this:
     - name: prospector-zmk-module
       remote: prospector
-      revision: feature/v2.0-scanner-touch  # v2.0 branch
+      revision: v2.0.0  # Use specific version tag
       path: modules/prospector-zmk-module
 ```
 
