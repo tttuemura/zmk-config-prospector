@@ -689,29 +689,16 @@ CONFIG_PROSPECTOR_TOUCH_ENABLED=n
 
 Rebuild firmware. All touch code excluded at compile time.
 
-### Will settings persist in v2.1?
+### Will settings persist across reboots?
 
-**Yes** - v2.1 will add NVS (Non-Volatile Storage) to save:
-- Max layers setting
-- Brightness overrides
-- Color scheme preferences
-- All Display Settings values
+**Not in v2.0** - settings reset to Kconfig defaults on power cycle.
 
-### How do I add more gestures?
+**For permanent settings**, edit Kconfig values and rebuild:
+```conf
+CONFIG_PROSPECTOR_MAX_LAYERS=7  # Your preferred default
+```
 
-**For Developers**: Modify `boards/shields/prospector_scanner/src/touch_handler.c`:
-
-1. Add gesture detection in `detect_gesture()`
-2. Raise event via `raise_zmk_swipe_gesture_event()`
-3. Handle in `scanner_display.c` swipe listener
-
-**For Users**: Wait for v2.1+ releases with additional gesture support.
-
-### Can I remap gestures?
-
-**Not in v2.0** - gestures are hardcoded.
-
-**Coming**: Configuration file for gesture mapping in future release.
+**Future consideration**: Settings persistence may be added in a future release if there is user demand. This would require implementing flash storage for configuration values.
 
 ---
 
