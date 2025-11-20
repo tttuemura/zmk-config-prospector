@@ -733,5 +733,19 @@ Rebuild firmware. All touch code excluded at compile time.
 
 ---
 
+## Special Thanks
+
+### Touch Implementation Reference
+
+This touch mode implementation was inspired by and references the excellent work by **kot149**:
+
+- **Article**: [Prospector Touch Panel Integration](https://zenn.dev/kot149/articles/prospector-touch) (Japanese)
+- **Author**: kot149
+- **Contribution**: Pioneering work on CST816S touch integration with Prospector hardware
+
+We are deeply grateful for kot149's detailed documentation and exploration of touch panel possibilities, which provided invaluable insights for developing this touch mode implementation.
+
+---
+
 **Version History**:
 - **v2.0.0** (2025-11-20): Initial touch mode documentation
