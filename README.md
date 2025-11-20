@@ -1,170 +1,538 @@
-> 🎉 **LATEST: v1.1.1 "Enhanced Experience" Released! (Aug 29, 2025)**
->
-> **✨ MAJOR ENHANCEMENTS**: Complete 10-layer support (0-9), dynamic centering, and breakthrough Device Tree fallback system.
-> 
-> **🔧 UNIVERSAL COMPATIBILITY**: Same firmware works perfectly with or without optional sensor hardware.
->
-> **🔟 LAYER DISPLAY**: Full 0-9 layer support with intelligent centering (4 layers = wide spacing, 10 layers = tight fit).
-> 
-> **🌞 AMBIENT LIGHT**: APDS9960 integration with smooth 800ms fade transitions and failsafe operation.
-> 
-> 👉 **[See complete release notes →](RELEASE_NOTES_v1.1.1.md)**
-
 # Prospector Scanner - ZMK Status Display Device
 
+> 🎉 **NEW: v2.0.0 "Touch & Precision" Released! (November 20, 2025)**
+>
+> **🎯 TOUCH PANEL SUPPORT**: Optional CST816S touch integration with swipe gestures
+>
+> **⚡ USB CONNECTION FIX**: Displays "> USB" when keyboard is USB-connected (Issue #5)
+>
+> **🔒 THREAD-SAFE**: Complete freeze elimination with LVGL mutex protection
+>
+> **⏱️ TIMEOUT DIMMING**: Configurable brightness reduction when no keyboard activity
+>
+> 👉 **[See complete v2.0 release notes →](docs/RELEASES/v2.0.0.md)**
+
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.1.1-brightgreen" alt="Version 1.1.1 Enhanced Experience">
+  <img src="https://img.shields.io/badge/version-v2.0.0-brightgreen" alt="Version 2.0.0 Touch & Precision">
   <img src="https://img.shields.io/badge/status-production%20ready-brightgreen" alt="Production Ready">
   <img src="https://img.shields.io/badge/ZMK-compatible-blue" alt="ZMK Compatible">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
 
-## 🔍 **What is Prospector?**
+---
 
-**Prospector** is a community-developed hardware platform designed for ZMK keyboard enhancement and monitoring. Originally created as a universal dongle solution, Prospector has evolved into multiple specialized modes:
+## 📋 Table of Contents
 
-- **🎯 Original Prospector**: Universal ZMK keyboard dongle for USB/wireless connectivity
-  - **Original Project**: [prospector](https://github.com/carrefinho/prospector) by carrefinho
-  - **Original Firmware**: [prospector-zmk-module](https://github.com/carrefinho/prospector-zmk-module)
-  - **Hardware Platform**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD display
-  - **Community Project**: Multiple implementations and variants across the ZMK ecosystem
-  - **Open Source**: MIT licensed hardware design with 3D-printable case
+1. [What is Prospector Scanner?](#what-is-prospector-scanner)
+2. [Touch Mode vs Non-Touch Mode](#touch-mode-vs-non-touch-mode)
+3. [Quick Start](#quick-start)
+4. [Hardware & Wiring](#hardware--wiring)
+5. [Configuration Guide](#configuration-guide)
+6. [Keyboard Integration](#keyboard-integration)
+7. [Documentation](#documentation)
 
-- **📱 This Project (Prospector Scanner)**: Advanced status monitoring system
-  - Independent BLE scanner mode using Prospector hardware
-  - Professional YADS-style UI for real-time keyboard monitoring
-  - Non-intrusive design that preserves full ZMK keyboard connectivity
-  - **v1.1.1**: Universal hardware compatibility, 10-layer support, smart centering, smooth ambient light control
+---
 
-**Prospector Scanner** transforms the Prospector hardware into an independent BLE status display device for ZMK keyboards. It provides real-time monitoring of keyboard status including battery levels, active layers, modifier keys, and connection states without interfering with your keyboard's normal connectivity.
+## What is Prospector Scanner?
 
-## 🎯 Key Features
+**Prospector Scanner** is an independent BLE status display device for ZMK keyboards. It monitors your keyboard's status (battery, layer, modifiers, WPM, etc.) in real-time without consuming a BLE connection slot.
 
-### 📱 **YADS-Style Professional UI**
-- **Multi-Widget Display**: Connection status, layer indicators, modifier keys, WPM tracking, and battery visualization
-- **Split Keyboard Support**: Unified display showing both left and right side information with configurable positioning
-- **Color-Coded Status**: 5-level battery indicators (Green/Light Green/Yellow/Orange/Red), unique pastel layer colors
-- **Real-time Updates**: Instant response to keyboard state changes with sub-second latency
-- **WPM Tracking**: Real-time Words Per Minute calculation with intelligent decay during idle periods
-
-### 🔋 **Smart Power Management** (v1.1.1 Enhanced)
-- **Activity-Based Intervals**: 10Hz (100ms) when typing, 0.03Hz (30s) when idle (improved from v1.0.0)
-- **Automatic Transitions**: Seamless switching between active/idle states with configurable timeouts
-- **WPM-Aware Updates**: Higher frequency during active typing sessions with decay algorithm
-- **Scanner Battery Support**: Real-time battery monitoring for scanner device with charging indicator
-- **Adaptive Brightness**: Automatic dimming when keyboards go idle to save battery
-- **USB/Battery Profiles**: Different brightness and power settings for USB vs battery operation
-
-### 🎮 **Universal Compatibility**
-- **Any ZMK Keyboard**: Works with split, unibody, or any ZMK-compatible device
-- **Non-Intrusive**: Keyboards maintain full 5-device connectivity
-- **Multi-Keyboard**: Monitor up to 3 keyboards simultaneously
-- **No Pairing Required**: Uses BLE advertisements (observer mode)
-
-### 🌟 **New in v1.1.1 "Enhanced Experience"**
-- **🔟 Complete Layer Display**: Full 0-9 layer support (10 layers total) with dynamic smart centering
-- **🔧 Universal Hardware Compatibility**: Revolutionary Device Tree fallback - same firmware works with or without sensors
-- **🌞 APDS9960 Mastery**: Ambient light sensor with smooth 800ms fade transitions and comprehensive error handling
-- **⚙️ One-Click Configuration**: Single setting enables all sensor dependencies automatically
-- **🎯 Perfect Centering**: 4 layers = wide spacing, 10 layers = tight fit, always perfectly centered
-- **📊 Enhanced Accuracy**: Fixed update rate calculation for accurate Hz display during typing
-
-## 🏗️ Architecture Overview
-
-### System Design
-
-**✅ Current Design (Independent Scanner)**:
-- Keyboard → Multiple Devices (up to 5)
-- Keyboard → Scanner (BLE Advertisement only)
-- Scanner operates independently, no connection limits
-
-### System Components
+### Key Concept
 
 ```
-┌─────────────┐    BLE Adv     ┌──────────────┐
-│   Keyboard  │ ──────────────→│   Scanner    │
-│             │    26-byte     │   Display    │
-│ (10Hz/0.03Hz)│   Protocol    │  (USB/Battery)│
-└─────────────┘                └──────────────┘
+Your Keyboard                    Prospector Scanner
+┌─────────────┐                 ┌──────────────┐
+│             │  BLE Adv        │              │
+│  Keyboard   │ ───────────────→│   Display    │
+│             │  (26 bytes)     │   Monitor    │
+└─────────────┘                 └──────────────┘
        │
-       ├── Device 1 (PC)
-       ├── Device 2 (Tablet)  
-       ├── Device 3 (Phone)
-       └── ... (up to 5 total)
+       ├── PC (BLE/USB)
+       ├── Tablet
+       ├── Phone
+       └── ... (up to 5 devices)
+
+Scanner uses BLE Advertisement - does NOT consume a connection slot!
 ```
 
-## 🛠️ Hardware Requirements
+### Why Use It?
 
-### Scanner Device (Prospector Hardware)
-- **MCU**: [Seeeduino XIAO BLE](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html) (nRF52840)
-- **Display**: Waveshare 1.69" Round LCD (ST7789V, 240x280 pixels)
-- **Light Sensor**: Adafruit APDS9960 ambient light sensor (optional, for auto-brightness)
-- **Battery**: 702030 size (350mAh) recommended, or 772435 size (600mAh) tight fit (optional, for portable operation)
-- **Power**: USB Type-C (5V) or battery
-- **Case**: 3D printed Prospector enclosure
+- ✅ **See Everything**: Battery, layer, modifiers, WPM, signal strength
+- ✅ **Multi-Keyboard**: Monitor up to 5 keyboards simultaneously
+- ✅ **Zero Connection Cost**: Uses BLE advertisements (observer mode)
+- ✅ **Professional UI**: YADS-style widget layout with NerdFont icons
+- ✅ **Split Keyboard Support**: Shows both left/right side information
 
-### Display Wiring
-```
-LCD_DIN  -> Pin 10 (MOSI)
-LCD_CLK  -> Pin 8  (SCK)
-LCD_CS   -> Pin 9  (CS)
-LCD_DC   -> Pin 7  (Data/Command)
-LCD_RST  -> Pin 3  (Reset)
-LCD_BL   -> Pin 6  (Backlight PWM)
-```
+### What's New in v2.0?
 
-### APDS9960 Wiring (v1.1.1)
-```
-SDA -> Pin D4
-SCL -> Pin D5
-VCC -> 3.3V
-GND -> GND
-```
+- 🎯 **Touch Panel Support**: Optional CST816S touch for interactive settings
+- 🔌 **USB Display Fix**: Shows "> USB" when keyboard is USB-connected
+- 🔒 **Thread-Safe**: Eliminates random freezes during gestures
+- ⏱️ **Timeout Dimming**: Auto-dim to 5% on keyboard inactivity
+- 📊 **Signal Updates**: Stable 1Hz update for reception strength
+- 🌞 **4-Pin APDS9960**: Ambient light sensor without interrupt pin
 
-### Supported Keyboards
-- Any ZMK-compatible keyboard with BLE support
-- Split keyboards (Corne, Lily58, Sofle, etc.)
-- Unibody keyboards (60%, TKL, etc.)
-- Custom ZMK builds
+---
 
-## 📦 Installation Guide
+## Touch Mode vs Non-Touch Mode
 
-### Step 1: Get Scanner Firmware
+v2.0 supports **two build configurations**: Touch Mode and Non-Touch Mode.
 
-#### Option A: Download Pre-Built (Easiest)
-📥 **[Download v1.1.1 Release](https://github.com/t-ogura/zmk-config-prospector/releases/tag/v1.1.1)**
-- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - Scanner mode firmware
-- `settings_reset-seeeduino_xiao_ble-zmk.uf2` - Settings reset firmware
-- Simply download and flash to your Seeeduino XIAO BLE
+### Quick Comparison
 
-#### Option B: Build Your Own (Recommended for Customization)
-1. Fork this repository: `https://github.com/t-ogura/zmk-config-prospector`
-   - Use the `main` branch for stable v1.1.1 release
-2. Enable GitHub Actions in your fork
-3. Push any commit to trigger automated build
-4. Download `zmk.uf2` from your Actions artifacts
-5. Flash to your Seeeduino XIAO BLE
+| Feature | Non-Touch Mode | Touch Mode |
+|---------|---------------|------------|
+| **Display** | Waveshare 1.69" Round LCD | Waveshare 1.69" Round LCD **with touch** |
+| **Wiring** | 6 display pins + power | **+4 touch pins required** |
+| **Settings** | Kconfig only (rebuild to change) | Interactive on-device adjustment |
+| **Gestures** | Not supported | 4-direction swipe gestures |
+| **Firmware Size** | ~900KB | ~920KB (+20KB) |
+| **Configuration File** | `prospector_scanner.conf` | `prospector_scanner_touch.conf` |
 
-#### Option C: Local Build
+### Which Mode Should I Choose?
+
+#### Choose **Non-Touch Mode** if:
+- ✅ You have standard Waveshare 1.69" LCD (no touch panel)
+- ✅ You prefer simpler wiring (6 pins instead of 10)
+- ✅ You don't need on-device settings adjustment
+- ✅ You want maximum firmware simplicity
+
+#### Choose **Touch Mode** if:
+- ✅ You have Waveshare 1.69" LCD **with CST816S touch panel**
+- ✅ You want to adjust settings without rebuilding firmware
+- ✅ You want swipe gestures for future features
+- ✅ You're comfortable with +4 pin wiring
+
+### Touch Mode Details
+
+👉 **[Complete Touch Mode Guide →](docs/TOUCH_MODE.md)**
+
+Touch mode requires:
+- Waveshare 1.69" Round LCD with CST816S touch controller
+- 4 additional connections: TP_SDA, TP_SCL, TP_INT, TP_RST
+- Different configuration file: `prospector_scanner_touch.conf`
+
+**This guide focuses on Non-Touch Mode.** For touch-specific setup, see the touch mode guide.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- **Hardware**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD
+- **Keyboard**: ZMK keyboard with status advertisement enabled (see [Keyboard Integration](#keyboard-integration))
+
+### Step 1: Get Firmware
+
+#### Option A: GitHub Actions (Recommended)
+
+1. **Fork this repository**
+   - Go to https://github.com/t-ogura/zmk-config-prospector
+   - Click "Fork" (top-right)
+
+2. **Enable GitHub Actions**
+   - In your fork, go to "Actions" tab
+   - Click "I understand my workflows, enable them"
+
+3. **Trigger Build**
+   - Go to "Actions" tab
+   - Select "Build" workflow
+   - Click "Run workflow" → "Run workflow"
+   - Wait ~5-10 minutes
+
+4. **Download Firmware**
+   - Scroll to "Artifacts" section
+   - Download "firmware" zip
+   - Extract `prospector_scanner-seeeduino_xiao_ble-zmk.uf2`
+
+#### Option B: Local Build
+
 ```bash
-# Clone repository (main branch for v1.1.1)
-git clone https://github.com/t-ogura/zmk-config-prospector
+# Clone and setup
+git clone https://github.com/YOUR_USERNAME/zmk-config-prospector.git
 cd zmk-config-prospector
-git checkout main
+python3 -m venv .venv
+source .venv/bin/activate
+pip install west
 
-# Initialize and build
+# Initialize workspace
 west init -l config
 west update
-west build -s zmk/app -b seeeduino_xiao_ble -- -DSHIELD=prospector_scanner
 
-# Flash the generated firmware
-# File: build/zephyr/zmk.uf2
+# Build (non-touch mode)
+west build -b seeeduino_xiao_ble -s zmk/app -- \
+  -DSHIELD=prospector_scanner \
+  -DZMK_CONFIG="$(pwd)/config"
+
+# Output: build/zephyr/zmk.uf2
 ```
 
-### Step 2: Add Scanner Support to Your Keyboard
+### Step 2: Wire Hardware
 
-#### A. Update west.yml
-Add the prospector module to your keyboard's `config/west.yml`:
+See [Hardware & Wiring](#hardware--wiring) for detailed pinout.
+
+**Minimum connections** (6 display pins + power):
+```
+LCD_DIN  → Pin 10 (MOSI)
+LCD_CLK  → Pin 8  (SCK)
+LCD_CS   → Pin 9  (CS)
+LCD_DC   → Pin 7  (Data/Command)
+LCD_RST  → Pin 3  (Reset)
+LCD_BL   → Pin 6  (Backlight PWM)
+VCC      → 3.3V
+GND      → GND
+```
+
+**Optional**: APDS9960 sensor (4-pin, no interrupt needed)
+```
+SDA → D4 (P0.04)
+SCL → D5 (P0.05)
+VCC → 3.3V
+GND → GND
+```
+
+### Step 3: Flash Firmware
+
+1. **Enter bootloader**:
+   - Connect XIAO BLE via USB
+   - Press RESET button **twice quickly** (within 0.5 seconds)
+   - `XIAO-SENSE` drive appears
+
+2. **Flash firmware**:
+   - Drag `.uf2` file to `XIAO-SENSE` drive
+   - Drive disconnects automatically
+   - Scanner reboots
+
+### Step 4: Configure Keyboard
+
+Add to your keyboard's `.conf` file:
+
+```conf
+# Enable status advertisement
+CONFIG_ZMK_STATUS_ADVERTISEMENT=y
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"
+
+# Power optimization (10Hz active, 0.03Hz idle)
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000
+
+# Split keyboard battery monitoring (if applicable)
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+```
+
+Rebuild and flash your keyboard firmware.
+
+### Step 5: Test
+
+1. Power on scanner (should show "Waiting for keyboards...")
+2. Power on keyboard
+3. Scanner should detect keyboard within 1-2 seconds
+4. Check display shows: device name, layer, battery, etc.
+
+**Success!** Your scanner is working.
+
+---
+
+## Hardware & Wiring
+
+### Required Components
+
+| Component | Specification | Link |
+|-----------|--------------|------|
+| **MCU** | Seeeduino XIAO BLE (nRF52840) | [Seeed Studio](https://www.seeedstudio.com/Seeed-XIAO-BLE-nRF52840-p-5201.html) |
+| **Display** | Waveshare 1.69" Round LCD (ST7789V) | [Waveshare](https://www.waveshare.com/1.69inch-lcd-module.htm) |
+
+### Optional Components
+
+| Component | Purpose | Link |
+|-----------|---------|------|
+| **APDS9960** | Ambient light sensor (auto-brightness) | [Adafruit](https://www.adafruit.com/product/3595) |
+| **LiPo Battery** | Portable operation (400-600mAh) | Generic 3.7V LiPo |
+
+### Pin Mapping
+
+#### Display Connections (Required)
+
+| Display Pin | XIAO BLE Pin | nRF52840 GPIO | Function |
+|------------|--------------|---------------|----------|
+| LCD_DIN | Pin 10 | P1.15 | SPI MOSI (data out) |
+| LCD_CLK | Pin 8 | P1.13 | SPI clock |
+| LCD_CS | Pin 9 | P1.14 | Chip select |
+| LCD_DC | Pin 7 | P1.12 | Data/Command select |
+| LCD_RST | Pin 3 | P0.03 | Display reset |
+| LCD_BL | Pin 6 | P1.11 | Backlight PWM |
+| VCC | 3.3V | - | Power (3.3V) |
+| GND | GND | - | Ground |
+
+#### APDS9960 Sensor (Optional)
+
+| Sensor Pin | XIAO BLE Pin | nRF52840 GPIO | Function |
+|-----------|--------------|---------------|----------|
+| VCC | 3.3V | - | Power (3.3V) |
+| GND | GND | - | Ground |
+| SDA | D4 | P0.04 | I2C data |
+| SCL | D5 | P0.05 | I2C clock |
+
+**Note**: v2.0 supports 4-pin connection - no interrupt pin needed (polling mode).
+
+#### Battery (Optional)
+
+| Battery Wire | XIAO BLE Pad | Description |
+|-------------|--------------|-------------|
+| + (Red) | BAT+ | Positive terminal |
+| - (Black) | BAT- | Ground |
+
+### Wiring Diagram
+
+```
+Waveshare 1.69" LCD             Seeeduino XIAO BLE
+┌─────────────────┐             ┌──────────────┐
+│                 │             │              │
+│  Display Pins   │             │  3.3V ───────┼─── VCC
+│  ├─ LCD_DIN ────┼─────────────┤  Pin 10      │
+│  ├─ LCD_CLK ────┼─────────────┤  Pin 8       │
+│  ├─ LCD_CS ─────┼─────────────┤  Pin 9       │
+│  ├─ LCD_DC ─────┼─────────────┤  Pin 7       │
+│  ├─ LCD_RST ────┼─────────────┤  Pin 3       │
+│  ├─ LCD_BL ─────┼─────────────┤  Pin 6       │
+│  ├─ VCC ────────┼─────────────┤  3.3V        │
+│  └─ GND ────────┼─────────────┤  GND         │
+│                 │             │              │
+└─────────────────┘             └──────────────┘
+
+Optional: APDS9960 Sensor
+┌─────────────┐
+│  APDS9960   │
+│  VCC ───────┼─────────────────┤  3.3V        │
+│  GND ───────┼─────────────────┤  GND         │
+│  SDA ───────┼─────────────────┤  D4          │
+│  SCL ───────┼─────────────────┤  D5          │
+└─────────────┘                 └──────────────┘
+
+Optional: LiPo Battery
+             ┌─ BAT+ (Red wire)
+     Battery ┤
+             └─ BAT- (Black wire)
+```
+
+### Wiring Tips
+
+1. **Test Display First**: Wire display pins and verify basic operation before adding sensor
+2. **Keep Wires Short**: I2C works best with wires < 10cm
+3. **Built-in Pull-ups**: XIAO BLE has I2C pull-ups on D4/D5 - no external resistors needed
+4. **Polarity Check**: Double-check VCC/GND before powering on
+5. **Clean Solder**: Poor solder joints cause intermittent display issues
+
+---
+
+## Configuration Guide
+
+Configuration file: `config/prospector_scanner.conf`
+
+### Essential Settings
+
+#### Scanner Mode (Required)
+
+```conf
+# Enable scanner mode
+CONFIG_PROSPECTOR_MODE_SCANNER=y
+
+# Multi-keyboard support
+CONFIG_PROSPECTOR_MULTI_KEYBOARD=y
+CONFIG_PROSPECTOR_MAX_KEYBOARDS=5     # Monitor up to 5 keyboards
+```
+
+#### Display & LVGL
+
+```conf
+# Display subsystem
+CONFIG_ZMK_DISPLAY=y
+CONFIG_DISPLAY=y
+CONFIG_LVGL=y
+
+# Required LVGL widgets
+CONFIG_LV_USE_BTN=y
+CONFIG_LV_USE_SLIDER=y
+CONFIG_LV_USE_SWITCH=y
+
+# Enable fonts (REQUIRED for widgets to compile)
+CONFIG_LV_FONT_MONTSERRAT_12=y
+CONFIG_LV_FONT_MONTSERRAT_16=y
+CONFIG_LV_FONT_MONTSERRAT_18=y
+CONFIG_LV_FONT_MONTSERRAT_20=y        # Default font
+CONFIG_LV_FONT_MONTSERRAT_22=y
+CONFIG_LV_FONT_MONTSERRAT_24=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
+CONFIG_LV_FONT_UNSCII_8=y             # Pixel fonts
+CONFIG_LV_FONT_UNSCII_16=y
+
+# Set default font
+CONFIG_LV_FONT_DEFAULT_MONTSERRAT_20=y
+```
+
+**Why fonts matter**: If fonts are not enabled, build will fail with `'lv_font_montserrat_XX' undeclared` errors. Enable ALL fonts listed above.
+
+### Layer Display Configuration
+
+```conf
+# Number of layer indicators shown on screen
+CONFIG_PROSPECTOR_MAX_LAYERS=7        # Range: 4-10
+
+# Visual effect:
+# - 4 layers: Wide spacing, large indicators
+# - 7 layers: Medium spacing (default)
+# - 10 layers: Tight spacing, maximum capacity
+```
+
+**Match your keyboard**: Set this to match your keyboard's layer count for best appearance. If your keyboard has 5 layers, set to 5 for optimal spacing.
+
+### Brightness Control
+
+#### Fixed Brightness (Simple)
+
+```conf
+# Disable ambient light sensor
+CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=n
+
+# Set fixed brightness (0-100%)
+CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=85
+```
+
+Best for: Users without APDS9960 sensor, or who prefer manual control.
+
+#### Automatic Brightness (Advanced)
+
+```conf
+# Enable ambient light sensor (requires APDS9960 hardware)
+CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y
+
+# Brightness range
+CONFIG_PROSPECTOR_ALS_MIN_BRIGHTNESS=20       # Minimum (dark rooms)
+CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_USB=100  # Maximum (USB power)
+
+# Smooth fade transitions
+CONFIG_PROSPECTOR_BRIGHTNESS_FADE_DURATION_MS=800  # 800ms fade
+CONFIG_PROSPECTOR_BRIGHTNESS_FADE_STEPS=12         # 12 steps
+```
+
+**What happens**: Scanner reads ambient light every few seconds and smoothly adjusts brightness (20-100%) with 800ms fade. No jarring changes.
+
+**Hardware requirement**: APDS9960 sensor wired to D4/D5 (4-pin connection, no interrupt pin needed).
+
+### Timeout Brightness (v2.0 New)
+
+```conf
+# Auto-dim when no keyboard activity
+CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS=480000      # 8 minutes (0=disabled)
+CONFIG_PROSPECTOR_SCANNER_TIMEOUT_BRIGHTNESS=5   # Dim to 5%
+```
+
+**What it does**:
+1. If no keyboard data received for 8 minutes → dim to 5%
+2. When keyboard sends data again → restore previous brightness
+3. Works with both USB and battery power
+
+**Use case**: Battery-powered scanner - extends battery life when keyboards are turned off.
+
+**Disable**: Set `CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS=0` to disable timeout.
+
+### Scanner Battery Support
+
+```conf
+# Enable scanner's own battery monitoring
+CONFIG_PROSPECTOR_BATTERY_SUPPORT=y   # Requires LiPo connected to XIAO BLE
+CONFIG_ZMK_BATTERY_REPORTING=y        # ZMK battery subsystem
+```
+
+**What you see**: Battery icon (🔋) in top-right corner with percentage and charging indicator.
+
+**Hardware requirement**: LiPo battery connected to XIAO BLE's BAT+/BAT- pads.
+
+**No battery?** Set `CONFIG_PROSPECTOR_BATTERY_SUPPORT=n` - no battery widget shown.
+
+### USB Logging (Development)
+
+```conf
+# Enable USB serial logging
+CONFIG_LOG=y
+CONFIG_ZMK_LOG_LEVEL_DBG=y
+
+# Reduce BT noise
+CONFIG_BT_LOG_LEVEL_WRN=y
+CONFIG_LOG_DEFAULT_LEVEL=4
+```
+
+**How to use**:
+1. Enable these settings
+2. Rebuild firmware
+3. Connect via USB
+4. Open serial monitor (e.g., `screen /dev/ttyACM0 115200`)
+5. See debug logs for troubleshooting
+
+**Production**: Set `CONFIG_LOG=n` to disable logging and reduce firmware size.
+
+### Complete Configuration Example
+
+```conf
+# ===== SCANNER MODE =====
+CONFIG_PROSPECTOR_MODE_SCANNER=y
+CONFIG_PROSPECTOR_MULTI_KEYBOARD=y
+CONFIG_PROSPECTOR_MAX_KEYBOARDS=5
+
+# ===== DISPLAY =====
+CONFIG_ZMK_DISPLAY=y
+CONFIG_DISPLAY=y
+CONFIG_LVGL=y
+CONFIG_PROSPECTOR_MAX_LAYERS=7
+
+# ===== BRIGHTNESS =====
+# Option 1: Fixed brightness (simple)
+CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=n
+CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=85
+
+# Option 2: Auto-brightness (requires APDS9960)
+# CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y
+# CONFIG_PROSPECTOR_ALS_MIN_BRIGHTNESS=20
+# CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_USB=100
+# CONFIG_PROSPECTOR_BRIGHTNESS_FADE_DURATION_MS=800
+
+# ===== TIMEOUT =====
+CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS=480000  # 8 min (0=disabled)
+CONFIG_PROSPECTOR_SCANNER_TIMEOUT_BRIGHTNESS=5
+
+# ===== BATTERY =====
+CONFIG_PROSPECTOR_BATTERY_SUPPORT=n  # Enable if LiPo connected
+
+# ===== FONTS (REQUIRED) =====
+CONFIG_LV_FONT_MONTSERRAT_12=y
+CONFIG_LV_FONT_MONTSERRAT_16=y
+CONFIG_LV_FONT_MONTSERRAT_18=y
+CONFIG_LV_FONT_MONTSERRAT_20=y
+CONFIG_LV_FONT_MONTSERRAT_22=y
+CONFIG_LV_FONT_MONTSERRAT_24=y
+CONFIG_LV_FONT_MONTSERRAT_28=y
+CONFIG_LV_FONT_UNSCII_8=y
+CONFIG_LV_FONT_UNSCII_16=y
+CONFIG_LV_FONT_DEFAULT_MONTSERRAT_20=y
+
+# ===== LOGGING (optional) =====
+# CONFIG_LOG=y
+# CONFIG_ZMK_LOG_LEVEL_DBG=y
+```
+
+Copy this template and customize for your needs.
+
+---
+
+## Keyboard Integration
+
+Your ZMK keyboard needs to broadcast status via BLE Advertisement.
+
+### Step 1: Add Module to Keyboard
+
+Edit your keyboard's `config/west.yml`:
 
 ```yaml
 manifest:
@@ -173,219 +541,117 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: prospector
       url-base: https://github.com/t-ogura
+
   projects:
     - name: zmk
       remote: zmkfirmware
       revision: main
       import: app/west.yml
+
+    # Add this:
     - name: prospector-zmk-module
       remote: prospector
-      revision: v1.1.1
+      revision: feature/v2.0-scanner-touch  # v2.0 branch
       path: modules/prospector-zmk-module
 ```
 
-#### B. Configure Advertisement
+### Step 2: Enable Status Advertisement
+
 Add to your keyboard's `.conf` file:
 
-```kconfig
-# ========================================
-# ESSENTIAL CONFIGURATION (Required)
-# ========================================
+```conf
+# Enable status advertisement
 CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Display name
+CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="MyKeyboard"  # Shown on scanner
 
-# Required for proper BLE functionality
-CONFIG_BT=y
-CONFIG_BT_PERIPHERAL=y
+# Activity-based intervals (battery optimization)
+CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
+CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100      # 10Hz when typing
+CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000      # 0.03Hz when idle
 
-# Required for split keyboards: Enable peripheral battery fetching
+# Split keyboard battery monitoring (if applicable)
 CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
 
-# Enable battery reporting
-CONFIG_ZMK_BATTERY_REPORTING=y
-
-# ========================================
-# POWER OPTIMIZATION (v1.1.1 Enhanced - 15x improvement from v1.0)
-# ========================================
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-# 10Hz when typing (ultra-responsive, was 0.5Hz in v1.0)
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100
-# 0.03Hz when idle (major battery savings, was 0.5Hz in v1.0)
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000
-# 10 seconds before idle mode (configurable)
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000
-
-# ========================================
-# SPLIT KEYBOARD CONFIGURATION (Optional)
-# ========================================
-# Specify which side is the central device (default: RIGHT)
-# Set to "LEFT" if your central device is on the left side
-# CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"
-
-# ========================================
-# WPM TRACKING CONFIGURATION (v1.1.1 New)
-# ========================================
-# Configure WPM calculation window (default: 30 seconds)
-# Ultra-responsive: 10s window (6x multiplier)
-# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=10
-# Balanced: 30s window (2x multiplier) - DEFAULT
-# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=30
-# Traditional: 60s window (1x multiplier)
-# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=60
-
-# ========================================
-# DISPLAY CUSTOMIZATION (Optional)
-# ========================================
-# Adjust scanner's layer display (default: 7 layers, 0-6)
-CONFIG_PROSPECTOR_MAX_LAYERS=7
-
-# Stop advertisements in deep sleep (max battery save)
-# CONFIG_ZMK_STATUS_ADV_STOP_ON_SLEEP=y
-
-# ========================================
-# DEBUGGING (Development Only)
-# ========================================
-# CONFIG_LOG=y
-# CONFIG_ZMK_LOG_LEVEL_DBG=y
+# (Optional) Central side selection for split keyboards
+# CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"  # or "RIGHT" (default)
 ```
 
-#### C. Rebuild and Flash
-1. Rebuild your keyboard firmware with the new configuration
-2. Flash the updated firmware to your keyboard
-3. Power on both scanner and keyboard
+### Step 3: Rebuild Keyboard Firmware
 
-### Step 3: Verification
+```bash
+# In your keyboard config directory
+west update
+west build -b your_board -- -DSHIELD=your_shield
 
-1. **Scanner Display**: Shows "Initializing..." then "Scanning..."
-2. **Keyboard Detection**: Scanner displays keyboard name within 5 seconds
-3. **Status Updates**: Battery, layer, WPM update in real-time
-4. **Scanner Battery**: If battery connected, shows level in top-right (v1.1.1)
-
-## 📊 Protocol Specification
-
-### BLE Advertisement Format (26 bytes)
-
-| Offset | Field | Size | Description | Example |
-|--------|-------|------|-------------|---------|
-| 0-1 | Manufacturer ID | 2 bytes | `0xFF 0xFF` (Local use) | `FF FF` |
-| 2-3 | Service UUID | 2 bytes | `0xAB 0xCD` (Prospector ID) | `AB CD` |
-| 4 | Protocol Version | 1 byte | Current version: `0x01` | `01` |
-| 5 | Battery Level | 1 byte | 0-100% (Central/Main) | `5A` (90%) |
-| 6 | Active Layer | 1 byte | Current layer 0-15 | `02` (Layer 2) |
-| 7 | Profile Slot | 1 byte | BLE profile 0-4 | `01` (Profile 1) |
-| 8 | Connection Count | 1 byte | Connected devices 0-5 | `03` (3 devices) |
-| 9 | Status Flags | 1 byte | USB/BLE/Caps flags | `05` (USB+Caps) |
-| 10 | Device Role | 1 byte | 0=Standalone, 1=Central, 2=Peripheral | `01` (Central) |
-| 11 | Device Index | 1 byte | Split keyboard index | `00` |
-| 12-14 | Peripheral Batteries | 3 bytes | Left/Right/Aux battery levels | `52 00 00` (82%, none, none) |
-| 15-18 | Layer Name | 4 bytes | Layer identifier | `4C30...` ("L0") |
-| 19-22 | Keyboard ID | 4 bytes | Hash of keyboard name | `12345678` |
-| 23 | Modifier Flags | 1 byte | L/R Ctrl,Shift,Alt,GUI | `05` (LCtrl+LShift) |
-| 24 | WPM Value | 1 byte | Words per minute (0-255) | `3C` (60 WPM) |
-| 25 | Reserved | 1 byte | Future expansion | `00` |
-
-## 🎨 Display Features
-
-### Widget Layout (v1.1.1)
-```
-┌─────────────────────────────┐
-│ 🔋85%  Device Name          │ ← Scanner battery (v1.1.1)
-│                    USB [P0] │ ← Connection status
-│                             │
-│ WPM                    RX   │ ← WPM + Signal info
-│ 045             -45dBm 10Hz │
-│                             │
-│          Layer              │ ← Layer title
-│    0  1  2  3  4  5  6      │ ← Pastel colored layers
-│                             │
-│        󰘴  󰘶  󰘵              │ ← Modifier symbols
-│                             │
-│    ████████████ 85%         │ ← Keyboard battery
-│    ████████████ 78%         │ ← Split keyboard
-└─────────────────────────────┘
+# Flash to keyboard
+# (Copy .uf2 to bootloader drive)
 ```
 
-### Visual Elements
-- **5-Level Battery Colors**: 
-  - 🟢 **80%+**: Green (#00CC66)
-  - 🟡 **60-79%**: Light Green (#66CC00)  
-  - 🟡 **40-59%**: Yellow (#FFCC00)
-  - 🟠 **20-39%**: Orange (#FF9900)
-  - 🔴 **<20%**: Red (#FF3333)
-- **Layer Colors**: 7-10 unique pastel colors, configurable count
-- **WPM Display**: Real-time with decay algorithm
-- **Scanner Battery**: Top-right with charging indicator (v1.1.1)
+### Step 4: Verify
 
-### Display Brightness (v1.1.1 Enhanced)
-- **Auto-Brightness**: APDS9960 sensor with non-linear response
-- **USB/Battery Profiles**: Different max brightness for each power source
-- **Activity-Based Dimming**: Automatic reduction when keyboards idle
-- **Smooth Transitions**: Configurable fade duration and steps
+1. Power on keyboard
+2. Power on scanner
+3. Scanner should detect keyboard within 1-2 seconds
+4. Device name should match `CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME`
 
-## 🔧 Configuration Options
+### What Gets Broadcast
 
-### Scanner Device (`prospector_scanner.conf`)
-```kconfig
-# ========================================
-# CORE SCANNER FEATURES
-# ========================================
-CONFIG_PROSPECTOR_MODE_SCANNER=y
-CONFIG_PROSPECTOR_MAX_KEYBOARDS=3
+The status advertisement (26 bytes) includes:
+- Battery level (0-100%)
+- Active layer (0-15)
+- BLE profile (0-4)
+- Connection status (USB/BLE)
+- Modifier states (Ctrl/Alt/Shift/GUI)
+- Keyboard role (central/peripheral for split)
+- WPM (words per minute)
 
-# ========================================
-# BATTERY SUPPORT (v1.1.1 - Optional)
-# ========================================
-# ⚠️  DISABLED BY DEFAULT - See "Battery Operation Setup" section below
-# CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
-# CONFIG_ZMK_BATTERY_REPORTING=y
-# CONFIG_USB_DEVICE_STACK=y
-# CONFIG_PROSPECTOR_BATTERY_UPDATE_INTERVAL_S=120  # 2 minutes
+Scanner receives this data every 100ms (active) or 30s (idle) and updates display.
 
-# ========================================
-# DISPLAY SETTINGS (v1.1.1 Enhanced)
-# ========================================
-# Auto-brightness with APDS9960
-CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y
-CONFIG_SENSOR=y
-CONFIG_APDS9960=y
-CONFIG_I2C=y
+---
 
-# Brightness ranges (USB vs Battery)
-CONFIG_PROSPECTOR_ALS_MIN_BRIGHTNESS=5          # 5% minimum
-CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_BATTERY=50 # 50% max on battery
-CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_USB=90     # 90% max on USB
+## Documentation
 
-# Fixed brightness when ALS disabled
-CONFIG_PROSPECTOR_FIXED_BRIGHTNESS_BATTERY=40   # 40% on battery
-CONFIG_PROSPECTOR_FIXED_BRIGHTNESS_USB=85       # 85% on USB
+### Guides
+- **[Touch Mode Guide](docs/TOUCH_MODE.md)** - Complete touch panel setup and usage
+- **[v2.0 Release Notes](docs/RELEASES/v2.0.0.md)** - Full changelog and migration guide
+- **[Architecture Design](SCANNER_RECONSTRUCTION_DESIGN.md)** - Technical architecture (local dev file)
 
-# Light sensor tuning
-CONFIG_PROSPECTOR_ALS_UPDATE_INTERVAL_MS=2000   # 2 second updates
-CONFIG_PROSPECTOR_ALS_SENSOR_THRESHOLD=200      # Indoor-optimized
+### Release History
+- **[All Releases](docs/RELEASES.md)** - Version history and release notes
+- **v2.0.0** (2025-11-20): Touch support, USB display fix, thread safety
+- **v1.1.1** (2025-08-29): Universal hardware compatibility, 10-layer support
+- **v1.1.0** (2025-08-26): Ambient light sensor, power optimization
+- **v1.0.0** (2025-08-01): Initial release with YADS-style UI
 
-# ========================================
-# POWER SAVING FEATURES (v1.1.1)
-# ========================================
-# Scanner timeout (8 minutes default)
-CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS=480000
+### GitHub Resources
+- **[Issues](https://github.com/t-ogura/zmk-config-prospector/issues)** - Bug reports and feature requests
+- **[Actions](https://github.com/t-ogura/zmk-config-prospector/actions)** - Automated firmware builds
+- **[Releases](https://github.com/t-ogura/zmk-config-prospector/releases)** - Pre-built firmware downloads
 
-# Auto-dim when keyboards idle
-CONFIG_PROSPECTOR_SCANNER_IDLE_BRIGHTNESS_MS=120000    # 2 minutes
-CONFIG_PROSPECTOR_SCANNER_IDLE_BRIGHTNESS_PERCENT=20   # 20% brightness
+### Community
+- **[ZMK Discord](https://zmk.dev/community/discord/invite)** - General ZMK support
+- **Original Prospector**: [carrefinho/prospector](https://github.com/carrefinho/prospector)
 
-# Advertisement frequency dimming
-CONFIG_PROSPECTOR_ADVERTISEMENT_FREQUENCY_DIM=y
-CONFIG_PROSPECTOR_ADV_FREQUENCY_DIM_THRESHOLD_MS=2000  # 2 seconds
-CONFIG_PROSPECTOR_ADV_FREQUENCY_DIM_BRIGHTNESS=25      # 25% brightness
+---
 
-# ========================================
-# LAYER DISPLAY
-# ========================================
-CONFIG_PROSPECTOR_MAX_LAYERS=7                   # Show layers 0-6
+## Troubleshooting
 
-# ========================================
-# FONTS (Required)
-# ========================================
+### Scanner Shows "Waiting for keyboards..."
+
+**Problem**: Scanner not detecting keyboard.
+
+**Solutions**:
+1. Check keyboard has `CONFIG_ZMK_STATUS_ADVERTISEMENT=y` enabled
+2. Verify keyboard firmware rebuilt and flashed after adding module
+3. Check keyboard is powered on and BLE is active
+4. Try power cycling both devices
+
+### Build Error: `'lv_font_montserrat_XX' undeclared`
+
+**Problem**: LVGL font not enabled.
+
+**Solution**: Enable ALL fonts in `prospector_scanner.conf`:
+```conf
 CONFIG_LV_FONT_MONTSERRAT_12=y
 CONFIG_LV_FONT_MONTSERRAT_16=y
 CONFIG_LV_FONT_MONTSERRAT_18=y
@@ -397,156 +663,114 @@ CONFIG_LV_FONT_UNSCII_8=y
 CONFIG_LV_FONT_UNSCII_16=y
 ```
 
-## 🔋 Battery Operation Setup
+### Display Shows Nothing / Blank Screen
 
-### 🔌 USB-Only Operation (Default)
+**Problem**: Display not initializing.
 
-**Prospector Scanner works perfectly without battery hardware.** By default, the scanner is configured for USB-only operation:
+**Solutions**:
+1. Check wiring - especially VCC/GND polarity
+2. Verify backlight pin (LCD_BL → Pin 6)
+3. Test with settings reset firmware
+4. Check XIAO BLE has power (LED indicator)
+5. Verify display module (try with non-touch firmware if you have touch display)
 
-- ✅ **Always powered**: Stable power from USB
-- ✅ **Simple setup**: No additional hardware needed
-- ✅ **Lower cost**: No battery purchase required
-- ✅ **Maintenance-free**: No battery charging management
+### Connection Shows "BLE" When USB Connected
 
-### 🔋 Battery Operation (Optional)
+**Problem**: USB connection not detected (should show "> USB").
 
-If you want portable operation, follow these steps to enable battery support:
+**This is a known issue in v1.x** - **Fixed in v2.0**.
 
-#### Hardware Requirements
-- **Recommended Battery**: 702030 size (350mAh) - fits perfectly in Prospector case
-- **Alternative**: 772435 size (600mAh) - fits but tight clearance
-- **Connector**: Standard JST connector (red=positive, black=negative)
-- **Connection**: Connect to BAT+ and BAT- pins on Seeeduino XIAO BLE
-- **Charging**: USB-C port provides automatic charging when connected
+**Solution**: Upgrade to v2.0 firmware (both scanner and keyboard).
 
-#### Software Configuration
+### APDS9960 Sensor Not Working
 
-**Step 1: Enable Battery Support in Scanner Config**
-Edit `config/prospector_scanner.conf` and uncomment the following lines:
+**Problem**: Brightness doesn't change with room lighting.
 
-```kconfig
-# Enable battery support
-CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
-CONFIG_ZMK_BATTERY_REPORTING=y
-CONFIG_USB_DEVICE_STACK=y
+**Solutions**:
+1. Check 4-pin wiring: VCC/GND/SDA (D4)/SCL (D5)
+2. Verify `CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y` enabled
+3. Check sensor has clear view (not blocked by case)
+4. Try increasing `CONFIG_PROSPECTOR_ALS_MIN_BRIGHTNESS` (sensor might be too dim)
 
-# Battery update interval (2 minutes)
-CONFIG_PROSPECTOR_BATTERY_UPDATE_INTERVAL_S=120
+**Note**: v2.0 does NOT require interrupt pin - 4-pin connection works.
 
-# Optional: Show percentage and position
-CONFIG_PROSPECTOR_BATTERY_SHOW_PERCENTAGE=y
-CONFIG_PROSPECTOR_BATTERY_WIDGET_POSITION="TOP_RIGHT"
+### Scanner Freezes During Use
+
+**Problem**: Display stops updating, becomes unresponsive.
+
+**This is a known issue in v1.x** - **Fixed in v2.0** with LVGL mutex protection.
+
+**Solution**: Upgrade to v2.0 firmware.
+
+### Battery Widget Not Showing
+
+**Problem**: No battery icon in top-right corner.
+
+**Solutions**:
+1. Check LiPo battery connected to BAT+/BAT- pads
+2. Verify `CONFIG_PROSPECTOR_BATTERY_SUPPORT=y` enabled
+3. Rebuild firmware after enabling battery support
+
+**No battery?** Set `CONFIG_PROSPECTOR_BATTERY_SUPPORT=n` - this is expected behavior.
+
+---
+
+## Advanced Topics
+
+### Building Custom Keyboard List
+
+Scanner can monitor up to 5 keyboards. Configure in `prospector_scanner.conf`:
+
+```conf
+CONFIG_PROSPECTOR_MAX_KEYBOARDS=5  # Increase if needed (max: 5)
 ```
 
-**Step 2: Rebuild and Flash**
-- Rebuild the scanner firmware with battery support enabled
-- Flash the new firmware to your scanner device
+Display automatically shows keyboards that broadcast status. No pairing needed.
 
-**Step 3: Verify Battery Operation**
-- Connect battery hardware
-- Power on without USB - scanner should boot from battery
-- Battery level widget should appear in top-right corner
-- USB charging indicator shows when USB is connected
+### WPM Calculation Windows
 
-#### Battery Management Features
+Adjust WPM responsiveness:
 
-When battery support is enabled, you get:
+```conf
+# Ultra-responsive (10s window, 6x multiplier)
+# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=10
 
-- 📊 **Real-time Battery Level**: Percentage display in top-right corner
-- ⚡ **Charging Indicator**: Shows charging status when USB connected  
-- 🔋 **Power-Aware Brightness**: Lower max brightness on battery vs USB
-- 💾 **Activity-Based Power Saving**: Dims display when keyboards idle
-- 🔄 **Automatic Detection**: Works with or without battery hardware
+# Balanced (30s window, 2x multiplier) - DEFAULT
+# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=30
 
-#### Power Consumption (350mAh Battery)
-
-- **Active Mode**: 4-6 hours typical usage (bright display, frequent updates)
-- **Idle Mode**: 8-12 hours (dimmed display, reduced update frequency)  
-- **Mixed Usage**: 6-8 hours typical daily use
-- **Charging**: 1.5-2 hours from empty to full via USB-C
-- **600mAh Battery**: Add 60-70% to above times for larger battery option
-
-#### Recommended Battery Settings
-
-```kconfig
-# Optimized for battery life
-CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_BATTERY=50  # 50% max on battery
-CONFIG_PROSPECTOR_ALS_MAX_BRIGHTNESS_USB=90      # 90% max on USB
-CONFIG_PROSPECTOR_SCANNER_IDLE_BRIGHTNESS_PERCENT=20  # 20% when idle
-
-# Faster display dimming for power saving
-CONFIG_PROSPECTOR_SCANNER_IDLE_BRIGHTNESS_MS=120000  # 2 minutes
-CONFIG_PROSPECTOR_ADVERTISEMENT_FREQUENCY_DIM=y     # Frequency-based dimming
+# Stable (60s window, 1x multiplier)
+# CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=60
 ```
 
-### 🛠️ Troubleshooting Battery Issues
+Shorter window = more responsive but jumpier. Longer window = more stable but slower to reflect changes.
 
-| Issue | Solution |
-|-------|----------|
-| **No Battery Widget** | • Verify CONFIG_PROSPECTOR_BATTERY_SUPPORT=y<br>• Check battery connection<br>• Ensure ZMK_BATTERY_REPORTING=y |
-| **0% Battery Display** | • Check JST connector polarity (red=+, black=-)<br>• Verify battery voltage (>3.0V)<br>• Try different battery<br>• Recommended: 702030 (350mAh) |
-| **No Charging** | • Check USB-C cable and connection<br>• Battery may be over-discharged<br>• Try leaving plugged for 30+ minutes |
-| **Short Battery Life** | • Reduce max brightness settings<br>• Enable idle dimming<br>• Check for stuck-on backlight |
+### Split Keyboard Central Side
 
-## 🐛 Troubleshooting
+For split keyboards, specify which side is central (has BLE profiles):
 
-### Scanner Issues
+```conf
+# In keyboard's .conf file
+CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"  # or "RIGHT" (default)
+```
 
-| Problem | Symptoms | Solution |
-|---------|----------|----------|
-| **No Display** | Black screen | • Check USB power<br>• Verify display wiring<br>• Reflash firmware |
-| **"Scanning..." Forever** | No keyboards detected | • Check keyboard CONFIG_ZMK_STATUS_ADVERTISEMENT=y<br>• Verify keyboard power<br>• Use BLE scanner app |
-| **No Scanner Battery** | Widget not shown | • See "Battery Operation Setup" section<br>• Enable CONFIG_PROSPECTOR_BATTERY_SUPPORT=y<br>• Check battery hardware connection |
-| **Dim Display** | Too dark/bright | • Adjust ALS_SENSOR_THRESHOLD<br>• Check APDS9960 wiring<br>• Try fixed brightness mode |
+This tells scanner which side to treat as "main" for connection status display.
 
-### Keyboard Issues
+### Debug Widget (Development)
 
-| Problem | Symptoms | Solution |
-|---------|----------|----------|
-| **No Advertisement** | Scanner can't find | • Add CONFIG_ZMK_STATUS_ADVERTISEMENT=y<br>• Set activity-based intervals<br>• Check BLE is enabled |
-| **High Battery Drain** | Fast discharge | • Enable activity-based mode<br>• Increase idle interval to 30000ms<br>• Use v1.1.1 power settings |
-| **Wrong Battery Side** | L/R swapped | • Set CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"<br>• Default is "RIGHT" |
+Enable debug overlay for development:
 
-### Debug Tools
-
-#### BLE Advertisement Verification
-Use **nRF Connect** (Android/iOS):
-1. Look for your keyboard name
-2. Check manufacturer data: `FF FF AB CD`
-3. Verify update intervals match config
-
-#### Scanner Debug (v1.1.1)
-```kconfig
-# Enable debug logging
-CONFIG_LOG=y
-CONFIG_ZMK_LOG_LEVEL_DBG=y
-
-# Battery investigation (development only)
+```conf
 CONFIG_PROSPECTOR_DEBUG_WIDGET=y
 ```
 
-## 📈 Performance Characteristics
+Shows technical information overlaid on screen. **Disable for production** (`=n`).
 
-### Power Consumption (v1.1.1 Optimized)
-- **Keyboard Active**: +20-30% battery (100ms intervals)
-- **Keyboard Idle**: +10-15% battery (30s intervals)
-- **Scanner on Battery**: 8-12 hours typical operation
-- **Scanner on USB**: Unlimited with charging
+---
 
-### Update Latency
-- **Key Press Response**: <200ms (10Hz in v1.1.1)
-- **Layer Changes**: Immediate
-- **Battery Updates**: 2 minutes (configurable)
-- **WPM Updates**: Real-time with decay
+## License & Attribution
 
-### BLE Range
-- **Typical Indoor**: 5-10 meters
-- **Line of Sight**: Up to 15 meters
-- **Through Walls**: 2-5 meters
+### License
 
-## 🧾 Licenses and Attribution
-
-### Project License
 This project is licensed under the **MIT License**. See `LICENSE` file for details.
 
 ### Third-Party Components
@@ -556,7 +780,7 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 - **Source**: https://github.com/zmkfirmware/zmk
 
 #### YADS (Yet Another Dongle Screen)
-- **License**: MIT License  
+- **License**: MIT License
 - **Source**: https://github.com/janpfischer/zmk-dongle-screen
 - **Attribution**: UI widget designs and NerdFont modifier symbols
 
@@ -565,123 +789,31 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 - **Source**: https://www.nerdfonts.com/
 - **Usage**: Modifier key symbols
 
-### Font Licenses
-- **Montserrat**: SIL Open Font License 1.1
-- **Unscii**: Public Domain
+### Original Prospector
 
-## 🚀 Future Enhancements
+This project builds upon the Prospector hardware platform:
+- **Original Project**: [prospector](https://github.com/carrefinho/prospector) by carrefinho
+- **Hardware Design**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD
+- **Open Source**: MIT licensed with 3D-printable case
 
-### Completed in v1.1.1 ✅
-- [x] Scanner battery support with charging indicator
-- [x] APDS9960 ambient light sensor integration
-- [x] USB/Battery separate brightness profiles
-- [x] Enhanced power management with activity dimming
-- [x] Improved WPM calculation with decay
-- [x] Production-ready optimizations
+---
 
-### Planned Features 🚧
-- [ ] E-ink display variant for ultra-low power
-- [ ] Web configuration interface
-- [ ] Custom themes and color schemes
-- [ ] Machine learning power prediction
-- [ ] Wireless charging support
-
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please:
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Test thoroughly
+5. Commit (`git commit -m 'Add amazing feature'`)
+6. Push to branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-### Development Setup
-```bash
-# Clone with submodules
-git clone --recursive https://github.com/t-ogura/zmk-config-prospector
-cd zmk-config-prospector
-
-# Initialize build environment
-west init -l config
-west update
-
-# Build and test
-west build -s zmk/app -b seeeduino_xiao_ble -- -DSHIELD=prospector_scanner
-```
-
-## 💡 Quick Setup Examples
-
-### Split Keyboard (v1.1.1 Optimized)
-```kconfig
-# Corne, Lily58, Sofle, etc.
-CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Corne"
-CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
-
-# v1.1.1 enhanced power optimization (15x improvement from v1.0)
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_BASED=y
-CONFIG_ZMK_STATUS_ADV_ACTIVE_INTERVAL_MS=100    # 10Hz active (was 0.5Hz)
-CONFIG_ZMK_STATUS_ADV_IDLE_INTERVAL_MS=30000    # 0.03Hz idle (was 0.5Hz)
-CONFIG_ZMK_STATUS_ADV_ACTIVITY_TIMEOUT_MS=10000 # 10s timeout
-
-# WPM tracking (v1.1.1 new feature)
-CONFIG_ZMK_STATUS_ADV_WPM_WINDOW_SECONDS=30     # 30s window (configurable)
-
-# If central is on left side (uncommon)
-# CONFIG_ZMK_STATUS_ADV_CENTRAL_SIDE="LEFT"
-```
-
-### 60% Keyboard
-```kconfig
-CONFIG_ZMK_STATUS_ADVERTISEMENT=y  
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="GH60"
-CONFIG_ZMK_BATTERY_REPORTING=y
-
-# Fewer layers
-CONFIG_PROSPECTOR_MAX_LAYERS=4
-```
-
-### High-Layer Keyboard
-```kconfig
-CONFIG_ZMK_STATUS_ADVERTISEMENT=y
-CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME="Planck"
-
-# Display 10 layers (0-9)
-CONFIG_PROSPECTOR_MAX_LAYERS=10
-```
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/t-ogura/zmk-config-prospector/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/t-ogura/zmk-config-prospector/discussions)  
-- **ZMK Community**: [ZMK Discord](https://discord.gg/8Y8y9u5)
-
-## 📚 Version History
-
-### v1.1.1 (2025-08-29)
-- ✨ Scanner battery support with real-time monitoring
-- ✨ APDS9960 ambient light sensor integration (enabled by default)
-- ✨ USB/Battery separate brightness profiles
-- ✨ Enhanced power management (30s idle intervals vs 2s in v1.0)
-- ✨ Improved WPM calculation with configurable window (5-120s)
-- ✨ Enhanced RX rate display with 10-sample smoothing and accurate IDLE detection
-- 🐛 Fixed scanner battery update stuck at 23%
-- 🐛 Fixed RX showing 5Hz during IDLE mode (now shows actual 0.03Hz)
-- 🐛 Fixed display timeout and reset issues
-- 🔧 Removed debug features for production
-- 📚 Comprehensive documentation update with battery specifications
-
-### v1.0.0 (2025-08-03)
-- 🎉 Initial stable release
-- ✨ YADS-style UI with pastel colors
-- ✨ Multi-keyboard support
-- ✨ Split keyboard battery display
-- ✨ Real-time status monitoring
-- ✨ Activity-based power management
+For major changes, please open an issue first to discuss what you would like to change.
 
 ---
 
-**Prospector Scanner v1.1.1** - Making ZMK keyboard status visible, beautiful, and battery-efficient.
+**Questions?** Open an [issue](https://github.com/t-ogura/zmk-config-prospector/issues) or join [ZMK Discord](https://zmk.dev/community/discord/invite).
 
-Built with ❤️ by the ZMK community.
+**Prospector Scanner v2.0.0** - ZMK Status Display Device
