@@ -37,23 +37,51 @@
 
 **Prospector Scanner** is an independent BLE status display device for ZMK keyboards. It monitors your keyboard's status (battery, layer, modifiers, WPM, etc.) in real-time without consuming a BLE connection slot.
 
-### Key Concept
+### About Prospector
+
+**Prospector** is a community hardware platform originally created by [carrefinho](https://github.com/carrefinho/prospector) as a universal ZMK keyboard dongle (keyboard → dongle → PC connection). This project takes the same hardware platform but uses it in a completely different way:
+
+**Original Prospector (Dongle Mode)**:
+- Keyboard connects to Prospector via BLE
+- Prospector connects to PC via USB or BLE
+- ⚠️ **Limitation**: Keyboard can only connect to dongle (loses multi-device capability)
+- ⚠️ **Limitation**: Requires keyboard-specific dongle shield configuration
+- ⚠️ **Limitation**: PC can't connect to keyboard directly
+
+**This Project (Scanner Mode)**:
+- Keyboard broadcasts status via BLE Advertisement (observer mode)
+- Prospector only **listens** - does NOT connect to keyboard
+- ✅ **Advantage**: Keyboard maintains full 5-device connectivity
+- ✅ **Advantage**: Works with ANY ZMK keyboard (no shield needed)
+- ✅ **Advantage**: Keyboard can connect directly to PC/tablet/phone
+
+### Why Scanner Mode?
 
 ```
-Your Keyboard                    Prospector Scanner
-┌─────────────┐                 ┌──────────────┐
-│             │  BLE Adv        │              │
-│  Keyboard   │ ───────────────→│   Display    │
-│             │  (26 bytes)     │   Monitor    │
-└─────────────┘                 └──────────────┘
-       │
-       ├── PC (BLE/USB)
-       ├── Tablet
-       ├── Phone
-       └── ... (up to 5 devices)
-
-Scanner uses BLE Advertisement - does NOT consume a connection slot!
+Dongle Mode (Original):              Scanner Mode (This Project):
+┌─────────────┐                      ┌─────────────┐
+│  Keyboard   │─BLE Connection──┐    │  Keyboard   │  BLE Adv (broadcast)
+└─────────────┘                 │    └─────────────┘       ↓
+                                ↓           │              ↓
+                        ┌──────────────┐   ├── PC     ┌──────────────┐
+                        │   Dongle     │   ├── Tablet │   Scanner    │
+                        │ (Prospector) │   ├── Phone  │ (Prospector) │
+                        └──────────────┘   └── ...    └──────────────┘
+                                │                      (just monitors)
+                                └─→ PC (only 1 device)
+Keyboard loses multi-device!         Keyboard keeps 5 devices!
 ```
+
+**Key Benefit**: Your keyboard stays fully functional with all devices while Scanner provides visual monitoring.
+
+### Hardware Platform
+
+Both modes use the same hardware:
+- **MCU**: Seeeduino XIAO BLE (nRF52840)
+- **Display**: Waveshare 1.69" Round LCD with touch panel (ST7789V + CST816S)
+- **3D Case**: Open-source design from original Prospector
+
+**Important**: Even "non-touch mode" uses the touch-enabled LCD - we simply don't wire the 4 touch pins. Original Prospector uses the same display but doesn't utilize touch functionality.
 
 ### Why Use It?
 
@@ -82,23 +110,25 @@ v2.0 supports **two build configurations**: Touch Mode and Non-Touch Mode.
 
 | Feature | Non-Touch Mode | Touch Mode |
 |---------|---------------|------------|
-| **Display** | Waveshare 1.69" Round LCD | Waveshare 1.69" Round LCD **with touch** |
-| **Wiring** | 6 display pins + power | **+4 touch pins required** |
+| **Display** | Waveshare 1.69" Touch LCD | Same display |
+| **Wiring** | 6 display pins + power (touch pins **not connected**) | **+4 touch pins** (TP_SDA/SCL/INT/RST) |
 | **Settings** | Kconfig only (rebuild to change) | Interactive on-device adjustment |
 | **Gestures** | Not supported | 4-direction swipe gestures |
 | **Firmware Size** | ~900KB | ~920KB (+20KB) |
 | **Configuration File** | `prospector_scanner.conf` | `prospector_scanner_touch.conf` |
 
+**Note**: Both modes use the **same Waveshare 1.69" Touch LCD** hardware. Non-touch mode simply leaves the 4 touch pins unconnected (same as original Prospector).
+
 ### Which Mode Should I Choose?
 
 #### Choose **Non-Touch Mode** if:
-- ✅ You have standard Waveshare 1.69" LCD (no touch panel)
-- ✅ You prefer simpler wiring (6 pins instead of 10)
+- ✅ You want simpler wiring (6 display pins only, no touch pins)
 - ✅ You don't need on-device settings adjustment
 - ✅ You want maximum firmware simplicity
+- ✅ You're following original Prospector hardware setup
 
 #### Choose **Touch Mode** if:
-- ✅ You have Waveshare 1.69" LCD **with CST816S touch panel**
+- ✅ You want to wire the 4 touch pins for interactive control
 - ✅ You want to adjust settings without rebuilding firmware
 - ✅ You want swipe gestures for future features
 - ✅ You're comfortable with +4 pin wiring
@@ -108,11 +138,11 @@ v2.0 supports **two build configurations**: Touch Mode and Non-Touch Mode.
 👉 **[Complete Touch Mode Guide →](docs/TOUCH_MODE.md)**
 
 Touch mode requires:
-- Waveshare 1.69" Round LCD with CST816S touch controller
-- 4 additional connections: TP_SDA, TP_SCL, TP_INT, TP_RST
+- Same Waveshare 1.69" Round LCD (with CST816S touch controller)
+- **4 additional connections**: TP_SDA, TP_SCL, TP_INT, TP_RST
 - Different configuration file: `prospector_scanner_touch.conf`
 
-**This guide focuses on Non-Touch Mode.** For touch-specific setup, see the touch mode guide.
+**This guide focuses on Non-Touch Mode** (standard Prospector wiring). For touch-specific setup, see the touch mode guide.
 
 ---
 
@@ -628,9 +658,10 @@ Scanner receives this data every 100ms (active) or 30s (idle) and updates displa
 - **[Actions](https://github.com/t-ogura/zmk-config-prospector/actions)** - Automated firmware builds
 - **[Releases](https://github.com/t-ogura/zmk-config-prospector/releases)** - Pre-built firmware downloads
 
-### Community
+### Community & Related Projects
 - **[ZMK Discord](https://zmk.dev/community/discord/invite)** - General ZMK support
-- **Original Prospector**: [carrefinho/prospector](https://github.com/carrefinho/prospector)
+- **[Original Prospector (Dongle Mode)](https://github.com/carrefinho/prospector)** - Hardware platform by carrefinho
+- **[Original Prospector Firmware](https://github.com/carrefinho/prospector-zmk-module)** - Dongle mode implementation
 
 ---
 
@@ -791,10 +822,14 @@ This project is licensed under the **MIT License**. See `LICENSE` file for detai
 
 ### Original Prospector
 
-This project builds upon the Prospector hardware platform:
+This project builds upon the Prospector hardware platform created by carrefinho:
 - **Original Project**: [prospector](https://github.com/carrefinho/prospector) by carrefinho
-- **Hardware Design**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD
-- **Open Source**: MIT licensed with 3D-printable case
+- **Original Firmware**: [prospector-zmk-module](https://github.com/carrefinho/prospector-zmk-module)
+- **Hardware Design**: Seeeduino XIAO BLE + Waveshare 1.69" Round LCD with touch panel
+- **3D Case Design**: Open-source STL files for 3D printing
+- **License**: MIT License
+
+**Difference**: Original Prospector uses the hardware as a dongle (keyboard connects to it), while this project uses it as an independent status monitor (keyboard stays independent). Both are valid uses of the same excellent hardware platform.
 
 ---
 
