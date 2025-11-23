@@ -28,3 +28,6 @@ Thumbs.db
 # Development files (keep locally, not in git)
 DYNAMIC_MEMORY_OPTIMIZATION.md
 build_local.sh
+
+# Test firmware builds
+test_firmware/
