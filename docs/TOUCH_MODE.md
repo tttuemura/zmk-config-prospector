@@ -90,43 +90,45 @@ Total: 10 signal pins + VCC/GND
 2. Click **"I understand my workflows, enable them"**
 3. GitHub Actions is now ready to build firmware
 
-**Step 3.3: Configure Touch Mode Build**
+**Step 3.3: Download Firmware**
 
-Edit `build.yaml` to build touch mode:
+By default, GitHub Actions builds **both** non-touch and touch firmware.
+
+**No configuration needed** - both firmware files will be available in the build artifacts:
+- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - Non-touch mode
+- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` (with touch config) - Touch mode
+
+**Optional: Build Only Touch Mode**
+
+If you want to build ONLY touch firmware (saves build time):
 
 1. Click `build.yaml` file in your fork
 2. Click **pencil icon** (Edit)
-3. Find the scanner section:
+3. Find and comment out the non-touch entry:
 
 ```yaml
 ---
 include:
-  - board: seeeduino_xiao_ble
-    shield: prospector_scanner
-```
+  # Non-touch mode - comment out if you only need touch firmware
+  # - board: seeeduino_xiao_ble
+  #   shield: prospector_scanner
 
-4. Change to use touch config:
-
-```yaml
----
-include:
+  # Touch mode (keep this)
   - board: seeeduino_xiao_ble
     shield: prospector_scanner
     cmake-args: -DCONF_FILE=prospector_scanner_touch.conf
 ```
 
-5. Click **"Commit changes"** at bottom
-6. Choose **"Commit directly to main branch"**
-7. Click **"Commit changes"** button
+4. Click **"Commit changes"** → **"Commit directly to main branch"**
 
-**Step 3.4: Download Firmware**
+**Step 3.4: Trigger and Download Build**
 
 1. Go to **"Actions"** tab
-2. Click on the latest workflow run (should be building)
+2. Click **"Build"** workflow → **"Run workflow"** → **"Run workflow"**
 3. Wait for build to complete (~5-10 minutes)
 4. Scroll down to **"Artifacts"** section
 5. Download **"firmware"** zip file
-6. Extract `prospector_scanner-seeeduino_xiao_ble-zmk.uf2`
+6. Extract the touch firmware file (look for the one built with `prospector_scanner_touch.conf` in the build log)
 
 ### Step 4: Flash Firmware
 
