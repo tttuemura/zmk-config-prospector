@@ -71,7 +71,6 @@ CONFIG_PROSPECTOR_BATTERY_SUPPORT=n  # Disable (default)
 
 ## Version
 
-- Module: `v2.0.0-scanner-touch`
-- Config: `feature/v2.0-scanner-touch`
+v2.0.0
 
-See [CLAUDE.md](../../CLAUDE.md) for detailed development documentation.
+For detailed development documentation, see [CLAUDE.md](../../CLAUDE.md).
