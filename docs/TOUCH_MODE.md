@@ -116,7 +116,7 @@ include:
   # Touch mode (keep this)
   - board: seeeduino_xiao_ble
     shield: prospector_scanner
-    cmake-args: -DCONF_FILE=prospector_scanner_touch.conf
+    cmake-args: -DCONF_FILE=${GITHUB_WORKSPACE}/config/prospector_scanner_touch.conf
 ```
 
 4. Click **"Commit changes"** → **"Commit directly to main branch"**
@@ -164,7 +164,7 @@ west update
 west build -b seeeduino_xiao_ble -s zmk/app -- \
   -DSHIELD=prospector_scanner \
   -DZMK_CONFIG="$(pwd)/config" \
-  -DCONF_FILE=prospector_scanner_touch.conf
+  -DCONF_FILE="$(pwd)/config/prospector_scanner_touch.conf"
 
 # Output: build/zephyr/zmk.uf2
 ```
