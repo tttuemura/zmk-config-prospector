@@ -90,33 +90,26 @@ Total: 10 signal pins + VCC/GND
 2. Click **"I understand my workflows, enable them"**
 3. GitHub Actions is now ready to build firmware
 
-**Step 3.3: Download Firmware**
+**Step 3.3: Enable Touch Mode in Configuration**
 
-By default, GitHub Actions builds **both** non-touch and touch firmware.
+Edit `config/prospector_scanner.conf` in your fork to enable touch support:
 
-**No configuration needed** - both firmware files will be available in the build artifacts:
-- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - Non-touch mode
-- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` (with touch config) - Touch mode
-
-**Optional: Build Only Touch Mode**
-
-If you want to build ONLY touch firmware (saves build time):
-
-1. Click `build.yaml` file in your fork
+1. Click `config/prospector_scanner.conf` in your fork
 2. Click **pencil icon** (Edit)
-3. Find and comment out the non-touch entry:
+3. Change the following settings:
 
-```yaml
----
-include:
-  # Non-touch mode - comment out if you only need touch firmware
-  # - board: seeeduino_xiao_ble
-  #   shield: prospector_scanner
+```conf
+# Touch Panel Support - ENABLE for touch mode
+CONFIG_PROSPECTOR_TOUCH_ENABLED=y
 
-  # Touch mode (keep this)
-  - board: seeeduino_xiao_ble
-    shield: prospector_scanner
-    cmake-args: -DCONF_FILE=${GITHUB_WORKSPACE}/config/prospector_scanner_touch.conf
+# Layer Display - Increase for touch mode adjustability
+CONFIG_PROSPECTOR_MAX_LAYERS=10
+
+# (Optional) Enable ambient light sensor if you have APDS9960
+# CONFIG_PROSPECTOR_USE_AMBIENT_LIGHT_SENSOR=y
+
+# (Optional) Enable battery support if you have LiPo connected
+# CONFIG_PROSPECTOR_BATTERY_SUPPORT=y
 ```
 
 4. Click **"Commit changes"** → **"Commit directly to main branch"**
@@ -128,7 +121,7 @@ include:
 3. Wait for build to complete (~5-10 minutes)
 4. Scroll down to **"Artifacts"** section
 5. Download **"firmware"** zip file
-6. Extract the touch firmware file (look for the one built with `prospector_scanner_touch.conf` in the build log)
+6. Extract `prospector_scanner-seeeduino_xiao_ble-zmk.uf2`
 
 ### Step 4: Flash Firmware
 
@@ -157,14 +150,25 @@ west init -l config
 west update
 ```
 
+**Enable Touch Mode**
+
+Edit `config/prospector_scanner.conf`:
+
+```conf
+# Enable touch panel support
+CONFIG_PROSPECTOR_TOUCH_ENABLED=y
+
+# Increase max layers for touch mode
+CONFIG_PROSPECTOR_MAX_LAYERS=10
+```
+
 **Build Command**
 
 ```bash
 # From zmk-config-prospector directory
 west build -b seeeduino_xiao_ble -s zmk/app -- \
   -DSHIELD=prospector_scanner \
-  -DZMK_CONFIG="$(pwd)/config" \
-  -DCONF_FILE="$(pwd)/config/prospector_scanner_touch.conf"
+  -DZMK_CONFIG="$(pwd)/config"
 
 # Output: build/zephyr/zmk.uf2
 ```

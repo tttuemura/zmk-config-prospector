@@ -174,11 +174,9 @@ Touch mode requires:
 4. **Download Firmware**
    - Scroll to "Artifacts" section
    - Download "firmware" zip
-   - Extract firmware files:
-     - `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` (non-touch mode)
-     - Second `prospector_scanner-...zmk.uf2` (touch mode - built with touch config)
-   - Use the **non-touch** firmware unless you have wired the 4 touch pins
-   - For touch mode setup, see [Touch Mode Guide](docs/TOUCH_MODE.md)
+   - Extract `prospector_scanner-seeeduino_xiao_ble-zmk.uf2`
+   - **Default**: Non-touch mode (6 display pins wired)
+   - **For touch mode**: See [Touch Mode Guide](docs/TOUCH_MODE.md) to enable touch in your fork
 
 #### Option B: Local Build
 

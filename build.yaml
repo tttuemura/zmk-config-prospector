@@ -1,13 +1,9 @@
 ---
 include:
-  # Non-touch mode (default - simpler wiring, no touch panel)
+  # Scanner mode (non-touch by default)
+  # For touch mode: Edit config/prospector_scanner.conf
   - board: seeeduino_xiao_ble
     shield: prospector_scanner
-
-  # Touch mode (requires 4 additional touch pins wired)
-  # Comment out this entry if you don't need touch firmware
-  - board: seeeduino_xiao_ble
-    shield: prospector_scanner_touch
 
   # Settings reset utility
   - board: seeeduino_xiao_ble
