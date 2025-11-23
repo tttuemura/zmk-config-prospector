@@ -103,26 +103,16 @@ Edit `build.yaml` to build touch mode:
 include:
   - board: seeeduino_xiao_ble
     shield: prospector_scanner
-    snippet: zmk-usb-logging
 ```
 
-4. Change `shield` to use touch config:
+4. Change to use touch config:
 
 ```yaml
 ---
 include:
   - board: seeeduino_xiao_ble
     shield: prospector_scanner
-    snippet: zmk-usb-logging
     cmake-args: -DCONF_FILE=prospector_scanner_touch.conf
-```
-
-**Alternative: Use west.yml snippet flag**:
-```yaml
-include:
-  - board: seeeduino_xiao_ble
-    shield: prospector_scanner
-    cmake-args: -DZMK_CONFIG=${GITHUB_WORKSPACE}/config -DCONF_FILE=prospector_scanner_touch.conf
 ```
 
 5. Click **"Commit changes"** at bottom
@@ -706,7 +696,7 @@ CONFIG_PROSPECTOR_MAX_LAYERS=7  # Your preferred default
 
 ### Documentation
 - [Main README](../README.md) - Project overview
-- [v2.0 Release Notes](RELEASES/v2.0.0.md) - Complete changelog
+- [v2.0 Release Notes](RELEASES/v2.0.0/release_notes.md) - Complete changelog
 - [Architecture Design](../SCANNER_RECONSTRUCTION_DESIGN.md) - Technical details (local dev file)
 
 ### Hardware Guides

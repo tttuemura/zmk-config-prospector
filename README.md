@@ -10,7 +10,7 @@
 >
 > **⏱️ TIMEOUT DIMMING**: Configurable brightness reduction when no keyboard activity
 >
-> 👉 **[See complete v2.0 release notes →](docs/RELEASES/v2.0.0.md)**
+> 👉 **[See complete v2.0 release notes →](docs/RELEASES/v2.0.0/release_notes.md)**
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-v2.0.0-brightgreen" alt="Version 2.0.0 Touch & Precision">
@@ -643,7 +643,7 @@ Scanner receives this data every 100ms (active) or 30s (idle) and updates displa
 
 ### Guides
 - **[Touch Mode Guide](docs/TOUCH_MODE.md)** - Complete touch panel setup and usage
-- **[v2.0 Release Notes](docs/RELEASES/v2.0.0.md)** - Full changelog and migration guide
+- **[v2.0 Release Notes](docs/RELEASES/v2.0.0/release_notes.md)** - Full changelog and migration guide
 - **[Architecture Design](SCANNER_RECONSTRUCTION_DESIGN.md)** - Technical architecture (local dev file)
 
 ### Release History
