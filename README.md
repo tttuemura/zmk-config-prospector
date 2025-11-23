@@ -115,7 +115,7 @@ v2.0 supports **two build configurations**: Touch Mode and Non-Touch Mode.
 | **Settings** | Kconfig only (rebuild to change) | Interactive on-device adjustment |
 | **Gestures** | Not supported | 4-direction swipe gestures |
 | **Firmware Size** | ~900KB | ~920KB (+20KB) |
-| **Configuration File** | `prospector_scanner.conf` | `prospector_scanner_touch.conf` |
+| **Configuration** | Edit `prospector_scanner.conf` | Edit `prospector_scanner.conf` + enable touch |
 
 **Note**: Both modes use the **same Waveshare 1.69" Touch LCD** hardware. Non-touch mode simply leaves the 4 touch pins unconnected (same as original Prospector).
 
@@ -140,7 +140,7 @@ v2.0 supports **two build configurations**: Touch Mode and Non-Touch Mode.
 Touch mode requires:
 - Same Waveshare 1.69" Round LCD (with CST816S touch controller)
 - **4 additional connections**: TP_SDA, TP_SCL, TP_INT, TP_RST
-- Different configuration file: `prospector_scanner_touch.conf`
+- Configuration change: Set `CONFIG_PROSPECTOR_TOUCH_ENABLED=y` in `prospector_scanner.conf`
 
 **This guide focuses on Non-Touch Mode** (standard Prospector wiring). For touch-specific setup, see the touch mode guide.
 

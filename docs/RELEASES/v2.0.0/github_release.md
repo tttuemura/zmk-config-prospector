@@ -75,10 +75,10 @@
 ## 📦 **What's Included**
 
 ### **Pre-Built Firmware** 📥
-- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - **Non-touch mode** (standard)
-- `prospector_scanner_touch-seeeduino_xiao_ble-zmk.uf2` - **Touch mode** (interactive)
+- `prospector_scanner-seeeduino_xiao_ble-zmk.uf2` - **Non-touch mode** (default)
 - `settings_reset-seeeduino_xiao_ble-zmk.uf2` - Settings reset firmware
-- Ready to flash - no building required!
+- **For touch mode**: Fork repo, edit `prospector_scanner.conf` to enable touch, build via GitHub Actions
+- Ready to flash - no building required (non-touch)!
 
 ### **Hardware Requirements** 🔧
 
@@ -121,9 +121,9 @@ TP_SCL -> D5 (P0.05)    TP_RST -> D1 (P0.28)
 | ✅ Don't need on-device adjustment | ✅ Want swipe gestures |
 
 ### **Step 2: Flash Scanner Firmware**
-1. Download appropriate firmware:
-   - Non-touch: `prospector_scanner-seeeduino_xiao_ble-zmk.uf2`
-   - Touch: `prospector_scanner_touch-seeeduino_xiao_ble-zmk.uf2`
+1. Download firmware:
+   - Non-touch (default): `prospector_scanner-seeeduino_xiao_ble-zmk.uf2`
+   - Touch: Build your own by editing `prospector_scanner.conf` (set `CONFIG_PROSPECTOR_TOUCH_ENABLED=y`)
 2. Connect Seeeduino XIAO BLE in bootloader mode (double-press reset)
 3. Copy firmware file to XIAO-SENSE drive
 4. Device will restart with Prospector Scanner v2.0

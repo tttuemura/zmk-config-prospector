@@ -24,7 +24,7 @@
 | Feature | Non-Touch Mode | Touch Mode |
 |---------|---------------|------------|
 | **Wiring** | 6 display pins + VCC/GND | **+4 touch pins required** |
-| **Build Configuration** | `prospector_scanner.conf` | `prospector_scanner_touch.conf` |
+| **Build Configuration** | `CONFIG_PROSPECTOR_TOUCH_ENABLED=n` | `CONFIG_PROSPECTOR_TOUCH_ENABLED=y` |
 | Display Settings | Kconfig only | Interactive screen |
 | Gestures | Not supported | 4-direction swipes |
 | Firmware Size | ~900KB | ~920KB (+20KB) |
@@ -228,7 +228,7 @@ CONFIG_PROSPECTOR_FIXED_BRIGHTNESS=85            # Used when sensor disabled
 
 ### Complete Configuration File
 
-**File**: `config/prospector_scanner_touch.conf`
+**File**: `config/prospector_scanner.conf`
 
 #### Essential Touch Settings
 
@@ -435,7 +435,7 @@ Interactive configuration screen - accessed via **DOWN swipe** from main screen.
 ⚠️ **IMPORTANT**: Slider range is LIMITED by Kconfig setting:
 
 ```conf
-# In prospector_scanner_touch.conf
+# In prospector_scanner.conf (when touch enabled)
 CONFIG_PROSPECTOR_MAX_LAYERS=10   # Allows adjusting up to 10 layers
 ```
 
@@ -532,8 +532,8 @@ Planned settings for future releases:
    ```
 
 4. **Check Firmware Build**:
-   - Did you flash touch firmware? (`prospector_scanner_touch.conf`)
-   - GitHub Actions: Did you specify `CONF_FILE=prospector_scanner_touch.conf`?
+   - Did you enable touch in config? (`CONFIG_PROSPECTOR_TOUCH_ENABLED=y`)
+   - GitHub Actions: Did you edit `prospector_scanner.conf` to enable touch?
 
 5. **I2C Bus Conflict**:
    - If APDS9960 also connected, verify both devices can coexist
@@ -554,7 +554,7 @@ Planned settings for future releases:
 
 **Cause**: Kconfig `CONFIG_PROSPECTOR_MAX_LAYERS` limits maximum.
 
-**Solution**: Edit `prospector_scanner_touch.conf`:
+**Solution**: Edit `prospector_scanner.conf`:
 ```conf
 CONFIG_PROSPECTOR_MAX_LAYERS=10  # Increase to desired maximum
 ```

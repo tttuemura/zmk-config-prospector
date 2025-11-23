@@ -128,33 +128,38 @@ v2.0.0 represents a **fundamental evolution** of Prospector Scanner with optiona
 
 ### Touch Mode Build
 
-**File**: `config/prospector_scanner_touch.conf`
+**File**: `config/prospector_scanner.conf`
 
 ```conf
 # Enable touch panel support
 CONFIG_PROSPECTOR_TOUCH_ENABLED=y
 
-# Touch panel dependencies (auto-enabled)
-CONFIG_INPUT=y
-CONFIG_INPUT_CST816S=y
-CONFIG_INPUT_CST816S_INTERRUPT=y
+# Increase max layers for touch adjustability
+CONFIG_PROSPECTOR_MAX_LAYERS=10
+
+# Touch panel dependencies (auto-enabled by above)
+# CONFIG_INPUT=y
+# CONFIG_INPUT_CST816S=y
+# CONFIG_INPUT_CST816S_INTERRUPT=y
 ```
 
 **Build Command**:
 ```bash
 west build -b seeeduino_xiao_ble -s zmk/app -- \
   -DSHIELD=prospector_scanner \
-  -DZMK_CONFIG="/path/to/config" \
-  -DZMK_EXTRA_MODULES="/path/to/prospector-zmk-module"
+  -DZMK_CONFIG="$(pwd)/config"
 ```
 
 ### Non-Touch Mode Build
 
-**File**: `config/prospector_scanner.conf`
+**File**: `config/prospector_scanner.conf` (default)
 
 ```conf
 # Disable touch panel support (default)
 CONFIG_PROSPECTOR_TOUCH_ENABLED=n
+
+# Max layers for non-touch (fixed)
+CONFIG_PROSPECTOR_MAX_LAYERS=7
 
 # All touch code excluded at compile time
 ```
@@ -189,9 +194,10 @@ Edit `config/west.yml`:
 - Existing wiring works as-is
 
 **For Touch Mode**:
-- Use `config/prospector_scanner_touch.conf`
+- Edit `config/prospector_scanner.conf`
 - Add touch panel wiring (TP_IRQ → D0, TP_RST → D1)
 - Enable touch configuration: `CONFIG_PROSPECTOR_TOUCH_ENABLED=y`
+- Increase max layers: `CONFIG_PROSPECTOR_MAX_LAYERS=10`
 
 #### **3. Update Keyboard Firmware** (Optional but Recommended)
 
