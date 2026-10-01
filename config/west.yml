@@ -7,11 +7,13 @@ manifest:
   projects:
     - name: zmk
       remote: zmkfirmware
-      revision: main
+      # Zephyr 4.1 ベースの ZMK main を特定 commit に固定（TrackBallPad_kbd FourDirSwithZmkv4 と同じ）
+      # v0.4 リリース後は tag に切り替える
+      revision: 5b51501fead672c41b5cfb396f3dafe0894bf4e9
       import: app/west.yml
     - name: prospector-zmk-module
       remote: prospector
-      revision: v2.2.1
+      revision: v2.2.3
       path: modules/prospector-zmk-module
   self:
     path: config
