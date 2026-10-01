@@ -2,4 +2,5 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    # ZMK main(5b51501) の build-user-config.yml をローカルにコピーし、ランナーを ubuntu-24.04 に固定したもの
+    uses: ./.github/workflows/build-user-config.yml
