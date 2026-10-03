@@ -734,7 +734,7 @@ lv_obj_t *zmk_display_status_screen(void) {
     wpm_title_label = lv_label_create(screen);
     lv_obj_set_style_text_font(wpm_title_label, &lv_font_unscii_8, 0);
     lv_obj_set_style_text_color(wpm_title_label, lv_color_make(0xA0, 0xA0, 0xA0), 0);
-    lv_label_set_text(wpm_title_label, "TB-C");
+    lv_label_set_text(wpm_title_label, "TB-P");
     lv_obj_set_pos(wpm_title_label, 16, 53);  /* 3px down */
 
     wpm_value_label = lv_label_create(screen);
@@ -1577,11 +1577,11 @@ void display_update_layer(int layer) {
     last_active_layer = layer;
 }
 
-/* Trackball sensitivity shown in the old WPM slot: "TB-C"/"TB-S" + level */
+/* Trackball sensitivity shown in the old WPM slot: "TB-P"/"TB-S" + level */
 static int8_t tb_cursor_cache = ZMK_STATUS_TB_NA;
 static int8_t tb_scroll_cache = ZMK_STATUS_TB_NA;
 static bool tb_scroll_active_cache = false;
-static char stbuf_tb_title[8] = "TB-C";
+static char stbuf_tb_title[8] = "TB-P";
 
 void display_update_tb(int8_t cursor, int8_t scroll, bool scroll_active) {
     tb_cursor_cache = cursor;
@@ -1590,7 +1590,7 @@ void display_update_tb(int8_t cursor, int8_t scroll, bool scroll_active) {
 
     int8_t level = scroll_active ? scroll : cursor;
     if (wpm_title_label) {
-        snprintf(stbuf_tb_title, sizeof(stbuf_tb_title), scroll_active ? "TB-S" : "TB-C");
+        snprintf(stbuf_tb_title, sizeof(stbuf_tb_title), scroll_active ? "TB-S" : "TB-P");
         lv_label_set_text_static(wpm_title_label, stbuf_tb_title);
     }
     if (wpm_value_label) {
@@ -1973,7 +1973,7 @@ static void create_main_screen_widgets(void) {
     wpm_title_label = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(wpm_title_label, &lv_font_unscii_8, 0);
     lv_obj_set_style_text_color(wpm_title_label, lv_color_make(0xA0, 0xA0, 0xA0), 0);
-    lv_label_set_text(wpm_title_label, "TB-C");
+    lv_label_set_text(wpm_title_label, "TB-P");
     lv_obj_set_pos(wpm_title_label, 16, 53);  /* 3px down */
 
     wpm_value_label = lv_label_create(screen_obj);
@@ -2898,7 +2898,7 @@ static int8_t tb_clamp(int32_t v) {
 
 static void tb_sens_refresh_widgets(bool update_slider) {
     if (tb_target_label) {
-        lv_label_set_text(tb_target_label, tb_state.target_scroll ? "SCROLL" : "CURSOR");
+        lv_label_set_text(tb_target_label, tb_state.target_scroll ? "SCROLL" : "POINTER");
         lv_obj_set_style_text_color(tb_target_label,
             tb_state.target_scroll ? lv_color_hex(0xFF9500) : lv_color_hex(0x007AFF), 0);
     }
