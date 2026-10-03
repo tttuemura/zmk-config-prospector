@@ -2718,7 +2718,7 @@ static void create_display_settings_widgets(void) {
     ds_nav_hint = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(ds_nav_hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(ds_nav_hint, lv_color_hex(0x808080), 0);
-    lv_label_set_text(ds_nav_hint, LV_SYMBOL_UP " Main");
+    lv_label_set_text(ds_nav_hint, LV_SYMBOL_DOWN " Main");
     lv_obj_align(ds_nav_hint, LV_ALIGN_BOTTOM_MID, 0, -10);
 
     LOG_INF("Display settings widgets created");
@@ -2835,11 +2835,7 @@ static void create_system_settings_widgets(void) {
     ss_nav_hint = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(ss_nav_hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(ss_nav_hint, lv_color_hex(0x808080), 0);
-#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
-    lv_label_set_text(ss_nav_hint, LV_SYMBOL_LEFT " Main    Trackball " LV_SYMBOL_RIGHT);
-#else
-    lv_label_set_text(ss_nav_hint, LV_SYMBOL_LEFT " Main");
-#endif
+    lv_label_set_text(ss_nav_hint, "Main " LV_SYMBOL_RIGHT);
     lv_obj_align(ss_nav_hint, LV_ALIGN_BOTTOM_MID, 0, -10);
 
     LOG_INF("System settings widgets created");
@@ -3178,7 +3174,7 @@ static void create_tb_sens_widgets(void) {
     tb_nav_hint = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(tb_nav_hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(tb_nav_hint, lv_color_hex(0x808080), 0);
-    lv_label_set_text(tb_nav_hint, LV_SYMBOL_LEFT " Quick Actions");
+    lv_label_set_text(tb_nav_hint, LV_SYMBOL_LEFT " Main");
     lv_obj_align(tb_nav_hint, LV_ALIGN_BOTTOM_MID, 0, -8);
 
     tb_state.last_slider_ms = -TB_SWIPE_GUARD_MS;
@@ -3794,7 +3790,7 @@ static void create_keyboard_select_widgets(void) {
     ks_nav_hint = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(ks_nav_hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(ks_nav_hint, lv_color_hex(0x808080), 0);
-    lv_label_set_text(ks_nav_hint, LV_SYMBOL_DOWN " Main");
+    lv_label_set_text(ks_nav_hint, LV_SYMBOL_UP " Main    " LV_SYMBOL_DOWN " Display");
     lv_obj_align(ks_nav_hint, LV_ALIGN_BOTTOM_MID, 0, -10);
 
     /* Create initial keyboard entries */
@@ -3858,6 +3854,78 @@ static void ensure_lvgl_indev_registered(void) {
 static inline void ensure_lvgl_indev_registered(void) {}
 #endif
 
+/* Leave the current screen and build `next` (main thread only) */
+static void nav_show_screen(enum screen_state next) {
+    LOG_INF(">>> Transitioning: %d -> %d", current_screen, next);
+
+    switch (current_screen) {
+    case SCREEN_MAIN:
+        destroy_main_screen_widgets();
+        break;
+    case SCREEN_DISPLAY_SETTINGS:
+        display_settings_save_if_dirty();
+        destroy_display_settings_widgets();
+        break;
+    case SCREEN_SYSTEM_SETTINGS:
+        display_settings_save_if_dirty();
+        destroy_system_settings_widgets();
+        break;
+    case SCREEN_KEYBOARD_SELECT:
+        destroy_keyboard_select_widgets();
+        break;
+    case SCREEN_PROSPECTOR_DISPLAY:
+        display_settings_save_if_dirty();
+        destroy_prospector_display_widgets();
+        break;
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+    case SCREEN_TB_SENS:
+        destroy_tb_sens_widgets();
+        break;
+#endif
+    default:
+        break;
+    }
+
+    lv_obj_clean(screen_obj);
+    bool dark = (next == SCREEN_MAIN || next == SCREEN_PROSPECTOR_DISPLAY);
+    lv_obj_set_style_bg_color(screen_obj, dark ? lv_color_black() : lv_color_hex(0x0A0A0A), 0);
+    lv_obj_invalidate(screen_obj);
+
+    switch (next) {
+    case SCREEN_MAIN:
+        create_main_screen_widgets();
+        break;
+    case SCREEN_DISPLAY_SETTINGS:
+        create_display_settings_widgets();
+        break;
+    case SCREEN_SYSTEM_SETTINGS:
+        create_system_settings_widgets();
+        break;
+    case SCREEN_KEYBOARD_SELECT:
+        create_keyboard_select_widgets();
+        break;
+    case SCREEN_PROSPECTOR_DISPLAY:
+        create_prospector_display_widgets();
+        break;
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+    case SCREEN_TB_SENS:
+        create_tb_sens_widgets();
+        break;
+#endif
+    default:
+        break;
+    }
+
+    if (next != SCREEN_MAIN) {
+        ensure_lvgl_indev_registered();  /* sliders / buttons / taps */
+    }
+    current_screen = next;
+    if (next == SCREEN_MAIN) {
+        scanner_msg_send_display_refresh();
+    }
+    LOG_INF(">>> Transition complete");
+}
+
 /**
  * Process pending swipe in main thread context (LVGL timer callback)
  * This ensures all LVGL operations are thread-safe.
@@ -3906,161 +3974,76 @@ static void swipe_process_timer_cb(lv_timer_t *timer) {
     /* Set transition flag to protect against concurrent operations */
     transition_in_progress = true;
 
+    /*
+     * Navigation (TrackBallPad layout). On this unit a finger moving to the
+     * RIGHT is reported as SWIPE_DIRECTION_LEFT and vice versa, so the
+     * comments below use the physical finger direction.
+     *
+     *   Main  --right-->  Trackball sensitivity      (left: back)
+     *   Main  --down--->  Keyboard select  --down-->  Prospector Display
+     *                     (up: back)                  (left/right: Main)
+     *   Main  --up----->  Display settings           (down: back)
+     *   Main  --left--->  Quick actions              (right: back)
+     */
     switch (dir) {
     case SWIPE_DIRECTION_DOWN:
-        /* Prospector Display: cycle layout */
         if (current_screen == SCREEN_PROSPECTOR_DISPLAY) {
-            LOG_INF(">>> Prospector Display: next layout");
             prospector_layouts_next();
             display_settings_set_layout((uint8_t)prospector_layouts_get_style());
-            break;
-        }
-        /* Main → Display Settings OR Keyboard Select → Main */
-        if (current_screen == SCREEN_MAIN) {
-            LOG_INF(">>> Transitioning: MAIN -> DISPLAY_SETTINGS");
-            destroy_main_screen_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
-            lv_obj_invalidate(screen_obj);
-            create_display_settings_widgets();
-            ensure_lvgl_indev_registered();  /* Register for slider/switch touch */
-            current_screen = SCREEN_DISPLAY_SETTINGS;
-            LOG_INF(">>> Transition complete");
+        } else if (current_screen == SCREEN_MAIN) {
+            nav_show_screen(SCREEN_KEYBOARD_SELECT);
         } else if (current_screen == SCREEN_KEYBOARD_SELECT) {
-            LOG_INF(">>> Transitioning: KEYBOARD_SELECT -> MAIN");
-            destroy_keyboard_select_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_black(), 0);
-            lv_obj_invalidate(screen_obj);
-            create_main_screen_widgets();
-            current_screen = SCREEN_MAIN;
-            scanner_msg_send_display_refresh();
-            LOG_INF(">>> Transition complete");
+            ks_close_channel_popup();
+            nav_show_screen(SCREEN_PROSPECTOR_DISPLAY);
+        } else if (current_screen == SCREEN_DISPLAY_SETTINGS) {
+            nav_show_screen(SCREEN_MAIN);
         }
         break;
 
     case SWIPE_DIRECTION_UP:
-        /* Prospector Display: cycle layout (reverse) */
         if (current_screen == SCREEN_PROSPECTOR_DISPLAY) {
-            LOG_INF(">>> Prospector Display: prev layout");
             prospector_layouts_prev();
             display_settings_set_layout((uint8_t)prospector_layouts_get_style());
-            break;
-        }
-        /* Display Settings → Main OR Main → Keyboard Select */
-        if (current_screen == SCREEN_DISPLAY_SETTINGS) {
-            LOG_INF(">>> Transitioning: DISPLAY_SETTINGS -> MAIN");
-            display_settings_save_if_dirty();
-            destroy_display_settings_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_black(), 0);
-            lv_obj_invalidate(screen_obj);
-            create_main_screen_widgets();
-            current_screen = SCREEN_MAIN;
-            scanner_msg_send_display_refresh();
-            LOG_INF(">>> Transition complete");
         } else if (current_screen == SCREEN_MAIN) {
-            LOG_INF(">>> Transitioning: MAIN -> KEYBOARD_SELECT");
-            destroy_main_screen_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
-            lv_obj_invalidate(screen_obj);
-            create_keyboard_select_widgets();
-            ensure_lvgl_indev_registered();  /* Register for keyboard entry touch */
-            current_screen = SCREEN_KEYBOARD_SELECT;
-            LOG_INF(">>> Transition complete");
-        }
-        break;
-
-    case SWIPE_DIRECTION_LEFT:
-        /* Main → Pong Wars OR Quick Actions → Main */
-        if (current_screen == SCREEN_MAIN) {
-            LOG_INF(">>> Transitioning: MAIN -> PROSPECTOR_DISPLAY");
-            destroy_main_screen_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_black(), 0);
-            lv_obj_invalidate(screen_obj);
-            create_prospector_display_widgets();
-            ensure_lvgl_indev_registered();  /* Register for tap-to-reset */
-            current_screen = SCREEN_PROSPECTOR_DISPLAY;
-            LOG_INF(">>> Transition complete");
-        }
-#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
-        else if (current_screen == SCREEN_TB_SENS && tb_sens_swipe_guard()) {
-            LOG_INF(">>> TB_SENS: swipe ignored (slider drag)");
-        } else if (current_screen == SCREEN_TB_SENS) {
-            LOG_INF(">>> Transitioning: TB_SENS -> QUICK_ACTIONS");
-            destroy_tb_sens_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
-            lv_obj_invalidate(screen_obj);
-            create_system_settings_widgets();
-            ensure_lvgl_indev_registered();
-            current_screen = SCREEN_SYSTEM_SETTINGS;
-            LOG_INF(">>> Transition complete");
-        }
-#endif
-        else if (current_screen == SCREEN_SYSTEM_SETTINGS) {
-            LOG_INF(">>> Transitioning: QUICK_ACTIONS -> MAIN");
-            display_settings_save_if_dirty();
-            destroy_system_settings_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_black(), 0);
-            lv_obj_invalidate(screen_obj);
-            create_main_screen_widgets();
-            current_screen = SCREEN_MAIN;
-            scanner_msg_send_display_refresh();
-            LOG_INF(">>> Transition complete");
+            nav_show_screen(SCREEN_DISPLAY_SETTINGS);
         } else if (current_screen == SCREEN_KEYBOARD_SELECT) {
-            /* Channel decrement on left swipe */
-            ks_close_channel_popup();  /* Close popup if open */
-            ks_channel_decrement();
-            LOG_INF(">>> Keyboard Select: Channel decremented");
+            ks_close_channel_popup();
+            nav_show_screen(SCREEN_MAIN);
         }
         break;
 
-    case SWIPE_DIRECTION_RIGHT:
-        /* Pong Wars → Main OR Main → Quick Actions */
-        if (current_screen == SCREEN_PROSPECTOR_DISPLAY) {
-            LOG_INF(">>> Transitioning: PROSPECTOR_DISPLAY -> MAIN");
-            display_settings_save_if_dirty();
-            destroy_prospector_display_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_black(), 0);
-            lv_obj_invalidate(screen_obj);
-            create_main_screen_widgets();
-            current_screen = SCREEN_MAIN;
-            scanner_msg_send_display_refresh();
-            LOG_INF(">>> Transition complete");
-        } else if (current_screen == SCREEN_MAIN) {
-            LOG_INF(">>> Transitioning: MAIN -> QUICK_ACTIONS");
-            destroy_main_screen_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
-            lv_obj_invalidate(screen_obj);
-            create_system_settings_widgets();
-            ensure_lvgl_indev_registered();  /* Register for button touch */
-            current_screen = SCREEN_SYSTEM_SETTINGS;
-            LOG_INF(">>> Transition complete");
+    case SWIPE_DIRECTION_LEFT: /* finger moved right */
+        if (current_screen == SCREEN_MAIN) {
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+            nav_show_screen(SCREEN_TB_SENS);
+#endif
+        } else if (current_screen == SCREEN_SYSTEM_SETTINGS ||
+                   current_screen == SCREEN_PROSPECTOR_DISPLAY) {
+            nav_show_screen(SCREEN_MAIN);
+        } else if (current_screen == SCREEN_KEYBOARD_SELECT) {
+            ks_close_channel_popup();
+            ks_channel_decrement();
+        }
+        break;
+
+    case SWIPE_DIRECTION_RIGHT: /* finger moved left */
+        if (current_screen == SCREEN_MAIN) {
+            nav_show_screen(SCREEN_SYSTEM_SETTINGS);
+        } else if (current_screen == SCREEN_PROSPECTOR_DISPLAY) {
+            nav_show_screen(SCREEN_MAIN);
         }
 #if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
-        else if (current_screen == SCREEN_SYSTEM_SETTINGS) {
-            LOG_INF(">>> Transitioning: QUICK_ACTIONS -> TB_SENS");
-            destroy_system_settings_widgets();
-            lv_obj_clean(screen_obj);
-            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
-            lv_obj_invalidate(screen_obj);
-            create_tb_sens_widgets();
-            ensure_lvgl_indev_registered();
-            current_screen = SCREEN_TB_SENS;
-            LOG_INF(">>> Transition complete");
+        else if (current_screen == SCREEN_TB_SENS) {
+            if (tb_sens_swipe_guard()) {
+                LOG_INF(">>> TB_SENS: swipe ignored (slider drag)");
+            } else {
+                nav_show_screen(SCREEN_MAIN);
+            }
         }
 #endif
         else if (current_screen == SCREEN_KEYBOARD_SELECT) {
-            /* Channel increment on right swipe */
-            ks_close_channel_popup();  /* Close popup if open */
+            ks_close_channel_popup();
             ks_channel_increment();
-            LOG_INF(">>> Keyboard Select: Channel incremented");
         }
         break;
 

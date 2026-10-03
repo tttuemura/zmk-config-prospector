@@ -20,11 +20,21 @@ on changes.
 
 Non-connectable manufacturer data `struct prospector_tb_packet`
 (`include/zmk/prospector_tb.h`, 12 bytes, UUID `AB CE`), addressed by
-`keyboard_id`. Sent only while the scanner's **Trackball** screen is open
-(Main -> swipe to Quick Actions -> swipe again). Every packet is a heartbeat;
+`keyboard_id`. Sent only while the scanner's **Trackball** screen is open. Every packet is a heartbeat;
 a command runs once per new `seq`. The broadcast pauses after 120 s without
 touching the screen.
 
 Scanner UI: the main screen shows `TB-C`/`TB-S` + level where WPM used to be.
 The Trackball screen has a slider (-8..8), -/+ and BASE / SAVE / DEFAULT, and
 follows the keyboard's active target (cursor / scroll) automatically.
+
+## Scanner navigation (this branch)
+
+Finger directions as seen by the user (on this unit the driver reports
+horizontal swipes mirrored, so the code handles SWIPE_DIRECTION_LEFT for a
+finger moving right):
+
+- Main -> right: Trackball sensitivity (left: back)
+- Main -> down: Keyboard select -> down: Prospector Display (left/right: Main)
+- Main -> up: Display settings (down: back)
+- Main -> left: Quick actions (right: back)
