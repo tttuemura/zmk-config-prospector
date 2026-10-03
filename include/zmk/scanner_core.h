@@ -41,6 +41,10 @@ struct pending_display_data {
     char layer_name[4];
     int layer;
     int wpm;
+    int8_t tb_cursor;            /* Trackball cursor level, ZMK_STATUS_TB_NA if n/a */
+    int8_t tb_scroll;            /* Trackball scroll level, ZMK_STATUS_TB_NA if n/a */
+    bool tb_scroll_active;       /* Keyboard's active target is scroll */
+    bool tb_link;                /* Keyboard is listening for scanner commands */
     bool usb_ready;
     bool ble_connected;
     bool ble_bonded;
@@ -67,6 +71,12 @@ struct pending_display_data {
  * @return true if an update was pending and copied
  */
 bool scanner_get_pending_update(struct pending_display_data *out);
+
+/**
+ * @brief Copy the 4-byte keyboard_id of the selected keyboard
+ * @return true if a keyboard is selected and active
+ */
+bool scanner_get_selected_keyboard_id(uint8_t id[4]);
 
 /**
  * @brief Consume the pending signal-widget update flag (display thread only)

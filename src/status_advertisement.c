@@ -554,6 +554,47 @@ static int peripheral_battery_listener(const zmk_event_t *eh) {
 }
 #endif
 
+// Default (weak) trackball sensitivity hook: not available.
+__weak int zmk_status_adv_tb_fill(int8_t *cursor, int8_t *scroll, uint8_t *flags) {
+    ARG_UNUSED(cursor);
+    ARG_UNUSED(scroll);
+    ARG_UNUSED(flags);
+    return -ENOTSUP;
+}
+
+void zmk_status_advertisement_keyboard_id(uint8_t id[4]) {
+    uint8_t hwid[16];
+    ssize_t hwid_len = hwinfo_get_device_id(hwid, sizeof(hwid));
+    uint32_t id_hash = 0;
+
+    if (hwid_len > 0) {
+        // Hash hardware device ID to 4 bytes
+        for (ssize_t i = 0; i < hwid_len; i++) {
+            id_hash = id_hash * 31 + hwid[i];
+        }
+    } else {
+        // Fallback: hash keyboard name (for boards without HWINFO)
+        const char *keyboard_name = CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME;
+        if (strlen(keyboard_name) == 0) {
+            keyboard_name = CONFIG_BT_DEVICE_NAME;
+        }
+        for (int i = 0; keyboard_name[i]; i++) {
+            id_hash = id_hash * 31 + keyboard_name[i];
+        }
+    }
+    memcpy(id, &id_hash, 4);
+}
+
+int zmk_status_advertisement_burst(void) {
+    if (!adv_started) {
+        return -EAGAIN;
+    }
+    atomic_set(&burst_remaining, BURST_COUNT);
+    k_work_cancel_delayable(&adv_work);
+    k_work_schedule(&adv_work, K_NO_WAIT);
+    return 0;
+}
+
 static void build_manufacturer_payload(void) {
     // Build 26-byte structured manufacturer data
     memset(&manufacturer_data, 0, sizeof(manufacturer_data));
@@ -745,7 +786,6 @@ static void build_manufacturer_payload(void) {
     // Get peripheral batteries using configurable indices
     uint8_t half_battery = peripheral_batteries[CONFIG_ZMK_STATUS_ADV_HALF_PERIPHERAL];
     uint8_t aux1_battery = peripheral_batteries[CONFIG_ZMK_STATUS_ADV_AUX1_PERIPHERAL];
-    uint8_t aux2_battery = peripheral_batteries[CONFIG_ZMK_STATUS_ADV_AUX2_PERIPHERAL];
 
     /*
      * Scanner display mapping:
@@ -762,7 +802,6 @@ static void build_manufacturer_payload(void) {
         // peripheral_battery[0] (RIGHT arc) = peripheral half
         manufacturer_data.peripheral_battery[0] = half_battery;    // Right physical -> Right arc
         manufacturer_data.peripheral_battery[1] = aux1_battery;    // Aux1 (e.g., trackball)
-        manufacturer_data.peripheral_battery[2] = aux2_battery;    // Aux2
         // battery_level already has central battery, no change needed
     } else if (strcmp(central_side, "AUX") == 0) {
         // Central is neither keyboard half (e.g. trackball unit as central).
@@ -774,7 +813,6 @@ static void build_manufacturer_payload(void) {
         manufacturer_data.peripheral_battery[0] =                  // Right arc
             peripheral_batteries[CONFIG_ZMK_STATUS_ADV_RIGHT_PERIPHERAL];
         manufacturer_data.peripheral_battery[1] = central_battery; // Aux1 = central itself
-        manufacturer_data.peripheral_battery[2] = aux2_battery;    // Aux2
     } else {
         // Central is on RIGHT physical side (default)
         // battery_level (LEFT arc) = peripheral half (swap needed)
@@ -783,7 +821,6 @@ static void build_manufacturer_payload(void) {
         manufacturer_data.battery_level = half_battery;            // Left physical (peripheral) -> Left arc
         manufacturer_data.peripheral_battery[0] = central_battery; // Right physical (central) -> Right arc
         manufacturer_data.peripheral_battery[1] = aux1_battery;    // Aux1 (e.g., trackball)
-        manufacturer_data.peripheral_battery[2] = aux2_battery;    // Aux2
     }
 
 #elif IS_ENABLED(CONFIG_ZMK_SPLIT) && !IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
@@ -792,7 +829,7 @@ static void build_manufacturer_payload(void) {
 #else
     manufacturer_data.device_role = ZMK_DEVICE_ROLE_STANDALONE;
     manufacturer_data.device_index = 0;
-    memset(manufacturer_data.peripheral_battery, 0, 3);
+    memset(manufacturer_data.peripheral_battery, 0, sizeof(manufacturer_data.peripheral_battery));
 #endif
 
     // Compact layer name (4 bytes, NOT null-terminated, full 4 chars usable)
@@ -819,30 +856,7 @@ static void build_manufacturer_payload(void) {
     // Keyboard ID (4 bytes) - hardware-unique ID from HWINFO (FICR on nRF52840)
     // This ensures the same physical device always has the same ID,
     // even when BLE MAC address changes across profile switches.
-    {
-        uint8_t hwid[16];
-        ssize_t hwid_len = hwinfo_get_device_id(hwid, sizeof(hwid));
-        uint32_t id_hash = 0;
-
-        if (hwid_len > 0) {
-            // Hash hardware device ID to 4 bytes
-            for (ssize_t i = 0; i < hwid_len; i++) {
-                id_hash = id_hash * 31 + hwid[i];
-            }
-            LOG_DBG("keyboard_id from HWINFO (%d bytes): %08X", (int)hwid_len, id_hash);
-        } else {
-            // Fallback: hash keyboard name (for boards without HWINFO)
-            const char *keyboard_name = CONFIG_ZMK_STATUS_ADV_KEYBOARD_NAME;
-            if (strlen(keyboard_name) == 0) {
-                keyboard_name = CONFIG_BT_DEVICE_NAME;
-            }
-            for (int i = 0; keyboard_name[i]; i++) {
-                id_hash = id_hash * 31 + keyboard_name[i];
-            }
-            LOG_WRN("HWINFO unavailable, using name-hash for keyboard_id: %08X", id_hash);
-        }
-        memcpy(manufacturer_data.keyboard_id, &id_hash, 4);
-    }
+    zmk_status_advertisement_keyboard_id(manufacturer_data.keyboard_id);
 
     // Modifier keys status - using exact YADS approach
     uint8_t modifier_flags = 0;
@@ -870,15 +884,19 @@ static void build_manufacturer_payload(void) {
 
     manufacturer_data.modifier_flags = modifier_flags;
 
-    // WPM (Words Per Minute) data collection - custom implementation
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) || !IS_ENABLED(CONFIG_ZMK_SPLIT)
-    // WPM only available on Central or non-Split devices
-    manufacturer_data.wpm_value = current_wpm;
-    LOG_DBG("⚡ Custom WPM: %d (key presses: %d)", current_wpm, key_press_count);
-#else
-    // Peripheral: no WPM data
-    manufacturer_data.wpm_value = 0;
-#endif
+    // Trackball sensitivity (replaces WPM / third battery slot).
+    // Filled by an optional strong zmk_status_adv_tb_fill() implementation.
+    {
+        int8_t tb_cursor = ZMK_STATUS_TB_NA;
+        int8_t tb_scroll = ZMK_STATUS_TB_NA;
+        uint8_t tb_flags = 0;
+        if (zmk_status_adv_tb_fill(&tb_cursor, &tb_scroll, &tb_flags) == 0) {
+            manufacturer_data.status_flags |=
+                tb_flags & (ZMK_STATUS_FLAG_TB_LINK | ZMK_STATUS_FLAG_TB_SCROLL);
+        }
+        manufacturer_data.tb_cursor = tb_cursor;
+        manufacturer_data.tb_scroll = tb_scroll;
+    }
 
     // Channel number (0 = broadcast to all scanners)
 #ifdef CONFIG_PROSPECTOR_CHANNEL

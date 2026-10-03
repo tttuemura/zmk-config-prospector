@@ -178,9 +178,9 @@ static void scan_callback(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 
     /* Push to ring buffer for LVGL timer to process */
     if (prospector_data) {
-        LOG_DBG("Central=%d%%, Peripheral=[%d,%d,%d], Layer=%d",
+        LOG_DBG("Central=%d%%, Peripheral=[%d,%d], TB=%d, Layer=%d",
                prospector_data->battery_level, prospector_data->peripheral_battery[0],
-               prospector_data->peripheral_battery[1], prospector_data->peripheral_battery[2],
+               prospector_data->peripheral_battery[1], prospector_data->tb_cursor,
                prospector_data->active_layer);
 
         const char *device_name = get_device_name(addr);

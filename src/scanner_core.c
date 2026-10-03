@@ -285,7 +285,11 @@ static void fill_pending_from_selected(void) {
     pending_data.device_name[MAX_NAME_LEN - 1] = '\0';
     memcpy(pending_data.layer_name, d->layer_name, sizeof(pending_data.layer_name));
     pending_data.layer = d->active_layer;
-    pending_data.wpm = d->wpm_value;
+    pending_data.wpm = 0;
+    pending_data.tb_cursor = d->tb_cursor;
+    pending_data.tb_scroll = d->tb_scroll;
+    pending_data.tb_scroll_active = (d->status_flags & ZMK_STATUS_FLAG_TB_SCROLL) != 0;
+    pending_data.tb_link = (d->status_flags & ZMK_STATUS_FLAG_TB_LINK) != 0;
     pending_data.usb_ready = (d->status_flags & ZMK_STATUS_FLAG_USB_HID_READY) != 0;
     pending_data.ble_connected = (d->status_flags & ZMK_STATUS_FLAG_BLE_CONNECTED) != 0;
     pending_data.ble_bonded = (d->status_flags & ZMK_STATUS_FLAG_BLE_BONDED) != 0;
@@ -294,7 +298,7 @@ static void fill_pending_from_selected(void) {
     pending_data.bat[0] = d->battery_level;
     pending_data.bat[1] = d->peripheral_battery[0];
     pending_data.bat[2] = d->peripheral_battery[1];
-    pending_data.bat[3] = d->peripheral_battery[2];
+    pending_data.bat[3] = 0;
 
     /* Decode keyboard firmware version */
     pending_data.kb_version_major = PROSPECTOR_DECODE_VERSION_MAJOR(d->version);
@@ -305,6 +309,23 @@ static void fill_pending_from_selected(void) {
 
     pending_data.no_keyboards = false;
     pending_data.update_pending = true;
+}
+
+bool scanner_get_selected_keyboard_id(uint8_t id[4]) {
+    bool ok = false;
+    if (!mutex_initialized) {
+        return false;
+    }
+    if (k_mutex_lock(&data_mutex, K_MSEC(10)) != 0) {
+        return false;
+    }
+    if (selected_keyboard >= 0 && selected_keyboard < MAX_KEYBOARDS &&
+        keyboards[selected_keyboard].active) {
+        memcpy(id, keyboards[selected_keyboard].data.keyboard_id, 4);
+        ok = true;
+    }
+    k_mutex_unlock(&data_mutex);
+    return ok;
 }
 
 int scanner_set_selected_keyboard(int index) {

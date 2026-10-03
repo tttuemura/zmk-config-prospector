@@ -16,6 +16,9 @@ endif()
 if(CONFIG_PROSPECTOR_MODE_SCANNER)
         target_sources(app PRIVATE src/status_scanner.c)
         target_sources(app PRIVATE src/scanner_core.c)
+        if(CONFIG_PROSPECTOR_TB_REMOTE)
+                target_sources(app PRIVATE src/tb_remote.c)
+        endif()
 
         # Get git describe for scanner version display
         execute_process(

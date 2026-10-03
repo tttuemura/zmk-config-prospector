@@ -46,6 +46,10 @@ LOG_MODULE_REGISTER(display_screen, LOG_LEVEL_INF);
  * zmk/scanner_core.h - NEVER redefine them locally (a drifted local copy once
  * caused an 8-byte stack overwrite in scanner_get_pending_update). */
 #include <zmk/scanner_core.h>
+#include <zmk/status_advertisement.h>
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+#include <zmk/prospector_tb.h>
+#endif
 
 /* LVGL timer for processing pending updates in main thread */
 static lv_timer_t *pending_update_timer = NULL;
@@ -57,6 +61,7 @@ enum screen_state {
     SCREEN_SYSTEM_SETTINGS,
     SCREEN_KEYBOARD_SELECT,
     SCREEN_PROSPECTOR_DISPLAY,
+    SCREEN_TB_SENS,              /* Trackball sensitivity remote */
 };
 
 static enum screen_state current_screen = SCREEN_MAIN;
@@ -106,11 +111,20 @@ static void create_keyboard_select_widgets(void);
 static void destroy_prospector_display_widgets(void);
 static void create_prospector_display_widgets(void);
 static void swipe_process_timer_cb(lv_timer_t *timer);
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+static void destroy_tb_sens_widgets(void);
+static void create_tb_sens_widgets(void);
+static void tb_sens_apply_data(const struct pending_display_data *data);
+static void tb_sens_tick(void);
+static void tb_sens_slider_live(int32_t value);
+static lv_obj_t *tb_slider = NULL;
+#endif
 
 /* Display update functions - called from pending_update_timer_cb */
 void display_update_device_name(const char *name);
 void display_update_layer(int layer);
 void display_update_wpm(int wpm);
+void display_update_tb(int8_t cursor, int8_t scroll, bool scroll_active);
 void display_update_connection(bool usb_rdy, bool ble_conn, bool ble_bond, int profile);
 void display_update_modifiers(uint8_t mods);
 void display_update_keyboard_battery_4(int bat0, int bat1, int bat2, int bat3);
@@ -525,6 +539,18 @@ static void pending_update_timer_cb(lv_timer_t *timer) {
         return;
     }
 
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+    /* Trackball sensitivity screen consumes keyboard data itself */
+    if (current_screen == SCREEN_TB_SENS) {
+        struct pending_display_data tb_data;
+        if (scanner_get_pending_update(&tb_data)) {
+            tb_sens_apply_data(&tb_data);
+        }
+        tb_sens_tick();
+        return;
+    }
+#endif
+
     /* Only process updates on main screen or prospector display */
     if (current_screen != SCREEN_MAIN && current_screen != SCREEN_PROSPECTOR_DISPLAY) {
         return;
@@ -540,7 +566,7 @@ static void pending_update_timer_cb(lv_timer_t *timer) {
             /* Reset display to initial "Scanning..." state */
             display_update_device_name("Scanning...");
             display_update_layer(0);
-            display_update_wpm(0);
+            display_update_tb(ZMK_STATUS_TB_NA, ZMK_STATUS_TB_NA, false);
             display_update_connection(false, false, false, 0);
             display_update_modifiers(0);
             display_update_keyboard_battery_4(0, 0, 0, 0);
@@ -599,7 +625,7 @@ static void pending_update_timer_cb(lv_timer_t *timer) {
             /* SCREEN_MAIN: Update YADS-style widgets */
             display_update_device_name(data.device_name);
             display_update_layer(data.layer);
-            display_update_wpm(data.wpm);
+            display_update_tb(data.tb_cursor, data.tb_scroll, data.tb_scroll_active);
             display_update_connection(data.usb_ready, data.ble_connected,
                                       data.ble_bonded, data.profile);
             display_update_modifiers(data.modifiers);
@@ -708,15 +734,15 @@ lv_obj_t *zmk_display_status_screen(void) {
     wpm_title_label = lv_label_create(screen);
     lv_obj_set_style_text_font(wpm_title_label, &lv_font_unscii_8, 0);
     lv_obj_set_style_text_color(wpm_title_label, lv_color_make(0xA0, 0xA0, 0xA0), 0);
-    lv_label_set_text(wpm_title_label, "WPM");
-    lv_obj_set_pos(wpm_title_label, 20, 53);  /* 3px down */
+    lv_label_set_text(wpm_title_label, "TB-C");
+    lv_obj_set_pos(wpm_title_label, 16, 53);  /* 3px down */
 
     wpm_value_label = lv_label_create(screen);
     lv_obj_set_style_text_font(wpm_value_label, &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(wpm_value_label, lv_color_white(), 0);
     lv_obj_set_width(wpm_value_label, 48);  /* Fixed width for centering */
     lv_obj_set_style_text_align(wpm_value_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_text(wpm_value_label, "0");
+    lv_label_set_text(wpm_value_label, "--");
     lv_obj_set_pos(wpm_value_label, 8, 66);  /* 3px down */
     LOG_INF("[INIT] WPM created");
 
@@ -1551,6 +1577,34 @@ void display_update_layer(int layer) {
     last_active_layer = layer;
 }
 
+/* Trackball sensitivity shown in the old WPM slot: "TB-C"/"TB-S" + level */
+static int8_t tb_cursor_cache = ZMK_STATUS_TB_NA;
+static int8_t tb_scroll_cache = ZMK_STATUS_TB_NA;
+static bool tb_scroll_active_cache = false;
+static char stbuf_tb_title[8] = "TB-C";
+
+void display_update_tb(int8_t cursor, int8_t scroll, bool scroll_active) {
+    tb_cursor_cache = cursor;
+    tb_scroll_cache = scroll;
+    tb_scroll_active_cache = scroll_active;
+
+    int8_t level = scroll_active ? scroll : cursor;
+    if (wpm_title_label) {
+        snprintf(stbuf_tb_title, sizeof(stbuf_tb_title), scroll_active ? "TB-S" : "TB-C");
+        lv_label_set_text_static(wpm_title_label, stbuf_tb_title);
+    }
+    if (wpm_value_label) {
+        if (level == ZMK_STATUS_TB_NA) {
+            snprintf(stbuf_wpm, sizeof(stbuf_wpm), "--");
+        } else if (level > 0) {
+            snprintf(stbuf_wpm, sizeof(stbuf_wpm), "+%d", level);
+        } else {
+            snprintf(stbuf_wpm, sizeof(stbuf_wpm), "%d", level);
+        }
+        lv_label_set_text_static(wpm_value_label, stbuf_wpm);
+    }
+}
+
 void display_update_wpm(int wpm) {
     wpm_value = wpm;  /* Cache for screen transitions */
     if (wpm_value_label) {
@@ -1919,15 +1973,15 @@ static void create_main_screen_widgets(void) {
     wpm_title_label = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(wpm_title_label, &lv_font_unscii_8, 0);
     lv_obj_set_style_text_color(wpm_title_label, lv_color_make(0xA0, 0xA0, 0xA0), 0);
-    lv_label_set_text(wpm_title_label, "WPM");
-    lv_obj_set_pos(wpm_title_label, 20, 53);  /* 3px down */
+    lv_label_set_text(wpm_title_label, "TB-C");
+    lv_obj_set_pos(wpm_title_label, 16, 53);  /* 3px down */
 
     wpm_value_label = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(wpm_value_label, &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(wpm_value_label, lv_color_white(), 0);
     lv_obj_set_width(wpm_value_label, 48);  /* Fixed width for centering */
     lv_obj_set_style_text_align(wpm_value_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_text(wpm_value_label, "0");
+    lv_label_set_text(wpm_value_label, "--");
     lv_obj_set_pos(wpm_value_label, 8, 66);  /* 3px down */
 
     transport_label = lv_label_create(screen_obj);
@@ -2072,7 +2126,7 @@ static void create_main_screen_widgets(void) {
     /* Restore all cached values to newly created widgets */
     display_update_device_name(cached_device_name);
     display_update_scanner_battery(scanner_battery);
-    display_update_wpm(wpm_value);
+    display_update_tb(tb_cursor_cache, tb_scroll_cache, tb_scroll_active_cache);
     display_update_connection(usb_ready, ble_connected, ble_bonded, ble_profile);
     display_update_layer(active_layer);
     display_update_modifiers(cached_modifiers);
@@ -2201,6 +2255,12 @@ static void ds_custom_slider_drag_cb(lv_event_t *e) {
             /* Update layer count label */
             lv_label_set_text_fmt(ds_layer_value, "%d", (int)new_value);
         }
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+        else if (tb_slider && slider == tb_slider) {
+            /* Real-time: send each new level while dragging */
+            tb_sens_slider_live(new_value);
+        }
+#endif
 
     } else if (code == LV_EVENT_RELEASED) {
         if (slider_drag_state.active_slider == slider) {
@@ -2775,11 +2835,373 @@ static void create_system_settings_widgets(void) {
     ss_nav_hint = lv_label_create(screen_obj);
     lv_obj_set_style_text_font(ss_nav_hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(ss_nav_hint, lv_color_hex(0x808080), 0);
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+    lv_label_set_text(ss_nav_hint, LV_SYMBOL_LEFT " Main    Trackball " LV_SYMBOL_RIGHT);
+#else
     lv_label_set_text(ss_nav_hint, LV_SYMBOL_LEFT " Main");
+#endif
     lv_obj_align(ss_nav_hint, LV_ALIGN_BOTTOM_MID, 0, -10);
 
     LOG_INF("System settings widgets created");
 }
+
+/* ========== Trackball Sensitivity Screen (Quick Actions -> RIGHT) ========== */
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+
+#define TB_LEVEL_MIN (-8)
+#define TB_LEVEL_MAX 8
+/* After a local command, ignore keyboard-reported levels this long so the
+ * slider doesn't jump back while the keyboard catches up. */
+#define TB_CMD_HOLD_MS 700
+/* Keyboard data older than this means the link is not confirmed */
+#define TB_LINK_STALE_MS 2500
+/* Ignore a LEFT swipe this soon after touching the slider (drag != swipe) */
+#define TB_SWIPE_GUARD_MS 400
+
+/* Factor per level in permille (~15% per step), mirrors the keyboard table */
+static const uint16_t tb_factor_permille[TB_LEVEL_MAX - TB_LEVEL_MIN + 1] = {
+    327, 376, 432, 497, 572, 658, 756, 870, 1000,
+    1150, 1323, 1521, 1749, 2011, 2313, 2660, 3059,
+};
+
+static lv_obj_t *tb_title_label = NULL;
+static lv_obj_t *tb_target_label = NULL;
+static lv_obj_t *tb_link_label = NULL;
+static lv_obj_t *tb_value_label = NULL;
+static lv_obj_t *tb_factor_label = NULL;
+static lv_obj_t *tb_minus_btn = NULL;
+static lv_obj_t *tb_plus_btn = NULL;
+static lv_obj_t *tb_base_btn = NULL;
+static lv_obj_t *tb_save_btn = NULL;
+static lv_obj_t *tb_default_btn = NULL;
+static lv_obj_t *tb_nav_hint = NULL;
+
+static struct {
+    bool remote_started;
+    bool have_data;
+    bool supported;
+    bool link;
+    bool target_scroll;
+    int8_t level;           /* level currently shown / requested */
+    int64_t last_cmd_ms;
+    int64_t last_data_ms;
+    int64_t last_slider_ms;
+    int64_t flash_until_ms;
+    const char *flash_text;
+} tb_state;
+
+static int8_t tb_clamp(int32_t v) {
+    if (v < TB_LEVEL_MIN) return TB_LEVEL_MIN;
+    if (v > TB_LEVEL_MAX) return TB_LEVEL_MAX;
+    return (int8_t)v;
+}
+
+static void tb_sens_refresh_widgets(bool update_slider) {
+    if (tb_target_label) {
+        lv_label_set_text(tb_target_label, tb_state.target_scroll ? "SCROLL" : "CURSOR");
+        lv_obj_set_style_text_color(tb_target_label,
+            tb_state.target_scroll ? lv_color_hex(0xFF9500) : lv_color_hex(0x007AFF), 0);
+    }
+    if (tb_value_label) {
+        if (!tb_state.have_data || !tb_state.supported) {
+            lv_label_set_text(tb_value_label, "--");
+        } else {
+            lv_label_set_text_fmt(tb_value_label, tb_state.level > 0 ? "+%d" : "%d",
+                                  (int)tb_state.level);
+        }
+    }
+    if (tb_factor_label) {
+        if (tb_state.have_data && tb_state.supported) {
+            uint16_t f = tb_factor_permille[tb_state.level - TB_LEVEL_MIN];
+            lv_label_set_text_fmt(tb_factor_label, "x%d.%02d", f / 1000, (f % 1000) / 10);
+        } else {
+            lv_label_set_text(tb_factor_label, "");
+        }
+    }
+    if (update_slider && tb_slider && slider_drag_state.active_slider != tb_slider) {
+        lv_slider_set_value(tb_slider, tb_state.level, LV_ANIM_OFF);
+    }
+}
+
+static void tb_sens_send(uint8_t cmd, int8_t value) {
+    if (!tb_state.remote_started) {
+        return;
+    }
+    uint8_t target = tb_state.target_scroll ? PROSPECTOR_TB_TARGET_SCROLL
+                                            : PROSPECTOR_TB_TARGET_CURSOR;
+    prospector_tb_remote_send(cmd, target, value);
+    tb_state.last_cmd_ms = k_uptime_get();
+}
+
+static void tb_sens_set_level(int32_t value) {
+    int8_t lvl = tb_clamp(value);
+    if (lvl == tb_state.level && k_uptime_get() - tb_state.last_cmd_ms < TB_CMD_HOLD_MS) {
+        return;  /* nothing new to send */
+    }
+    tb_state.level = lvl;
+    tb_sens_send(PROSPECTOR_TB_CMD_SET_LEVEL, lvl);
+    tb_sens_refresh_widgets(true);
+}
+
+static void tb_sens_slider_live(int32_t value) {
+    tb_state.last_slider_ms = k_uptime_get();
+    tb_sens_set_level(value);
+}
+
+static void tb_slider_event_cb(lv_event_t *e) {
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_PRESSED || code == LV_EVENT_PRESSING || code == LV_EVENT_RELEASED) {
+        tb_state.last_slider_ms = k_uptime_get();
+    }
+    /* Final value after the custom drag handler releases the slider */
+    if (code == LV_EVENT_VALUE_CHANGED && slider_drag_state.active_slider == NULL) {
+        tb_sens_set_level(lv_slider_get_value(tb_slider));
+    }
+}
+
+static void tb_btn_event_cb(lv_event_t *e) {
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) {
+        return;
+    }
+    lv_obj_t *btn = lv_event_get_target(e);
+    int64_t now = k_uptime_get();
+
+    if (btn == tb_minus_btn) {
+        tb_sens_set_level(tb_state.level - 1);
+    } else if (btn == tb_plus_btn) {
+        tb_sens_set_level(tb_state.level + 1);
+    } else if (btn == tb_base_btn) {
+        tb_sens_send(PROSPECTOR_TB_CMD_TO_BASE, 0);
+        /* Unknown result: accept the keyboard's report on the next update */
+        tb_state.last_cmd_ms = now - TB_CMD_HOLD_MS + 150;
+        tb_state.flash_text = "BASE";
+        tb_state.flash_until_ms = now + 1000;
+    } else if (btn == tb_save_btn) {
+        tb_sens_send(PROSPECTOR_TB_CMD_SAVE, 0);
+        tb_state.flash_text = "SAVED";
+        tb_state.flash_until_ms = now + 1500;
+    } else if (btn == tb_default_btn) {
+        tb_sens_send(PROSPECTOR_TB_CMD_TO_DEFAULT, 0);
+        tb_state.level = 0;
+        tb_state.flash_text = "DEFAULT";
+        tb_state.flash_until_ms = now + 1000;
+        tb_sens_refresh_widgets(true);
+    }
+}
+
+static void tb_sens_apply_data(const struct pending_display_data *data) {
+    int64_t now = k_uptime_get();
+    if (data->no_keyboards) {
+        tb_state.have_data = false;
+        tb_state.link = false;
+        tb_sens_refresh_widgets(false);
+        return;
+    }
+
+    bool target_changed = tb_state.have_data && (data->tb_scroll_active != tb_state.target_scroll);
+    tb_state.have_data = true;
+    tb_state.last_data_ms = now;
+    tb_state.link = data->tb_link;
+    tb_state.supported = (data->tb_cursor != ZMK_STATUS_TB_NA);
+    tb_state.target_scroll = data->tb_scroll_active;
+
+    int8_t kb_level = tb_state.target_scroll ? data->tb_scroll : data->tb_cursor;
+    if (!tb_state.supported || kb_level == ZMK_STATUS_TB_NA) {
+        tb_sens_refresh_widgets(false);
+        return;
+    }
+    /* Follow the keyboard unless the user just changed the value here */
+    if (target_changed || now - tb_state.last_cmd_ms >= TB_CMD_HOLD_MS) {
+        tb_state.level = tb_clamp(kb_level);
+    }
+    tb_sens_refresh_widgets(true);
+}
+
+static void tb_sens_tick(void) {
+    int64_t now = k_uptime_get();
+
+    if (!tb_state.remote_started) {
+        uint8_t id[4];
+        if (scanner_get_selected_keyboard_id(id)) {
+            tb_state.remote_started = (prospector_tb_remote_begin(id) == 0);
+        }
+    }
+
+    if (!tb_link_label) {
+        return;
+    }
+    const char *text;
+    uint32_t color;
+    if (now < tb_state.flash_until_ms && tb_state.flash_text) {
+        text = tb_state.flash_text;
+        color = 0x34C759;
+    } else if (!tb_state.remote_started) {
+        text = "NO KB";
+        color = 0x808080;
+    } else if (tb_state.have_data && !tb_state.supported) {
+        text = "N/A";
+        color = 0x808080;
+    } else if (!prospector_tb_remote_active()) {
+        text = "IDLE";
+        color = 0x808080;
+    } else if (tb_state.link && now - tb_state.last_data_ms < TB_LINK_STALE_MS) {
+        text = LV_SYMBOL_OK " LINK";
+        color = 0x34C759;
+    } else {
+        text = "WAIT";
+        color = 0xFFCC00;
+    }
+    lv_label_set_text(tb_link_label, text);
+    lv_obj_set_style_text_color(tb_link_label, lv_color_hex(color), 0);
+}
+
+static bool tb_sens_swipe_guard(void) {
+    return k_uptime_get() - tb_state.last_slider_ms < TB_SWIPE_GUARD_MS ||
+           slider_drag_state.active_slider == tb_slider;
+}
+
+static lv_obj_t *tb_make_btn(const char *text, uint32_t color, int x, int y, int w, int h,
+                             const lv_font_t *font) {
+    lv_obj_t *btn = lv_btn_create(screen_obj);
+    lv_obj_set_size(btn, w, h);
+    lv_obj_set_pos(btn, x, y);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(color), LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(0x5A5A5E), LV_STATE_PRESSED);
+    lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(btn, 8, LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(btn, 0, LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(btn, 0, LV_STATE_DEFAULT);
+    lv_obj_set_ext_click_area(btn, 4);
+    lv_obj_add_event_cb(btn, tb_btn_event_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t *label = lv_label_create(btn);
+    lv_label_set_text(label, text);
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_style_text_color(label, lv_color_white(), 0);
+    lv_obj_center(label);
+    return btn;
+}
+
+static void destroy_tb_sens_widgets(void) {
+    LOG_INF("Destroying trackball sensitivity widgets...");
+    prospector_tb_remote_end();
+    tb_state.remote_started = false;
+    if (slider_drag_state.active_slider == tb_slider) {
+        slider_drag_state.active_slider = NULL;
+        ui_interaction_active = false;
+    }
+    lv_obj_t **objs[] = {
+        &tb_nav_hint, &tb_default_btn, &tb_save_btn, &tb_base_btn, &tb_plus_btn,
+        &tb_minus_btn, &tb_slider, &tb_factor_label, &tb_value_label, &tb_link_label,
+        &tb_target_label, &tb_title_label,
+    };
+    for (size_t i = 0; i < ARRAY_SIZE(objs); i++) {
+        if (*objs[i]) {
+            lv_obj_del(*objs[i]);
+            *objs[i] = NULL;
+        }
+    }
+}
+
+static void create_tb_sens_widgets(void) {
+    if (!screen_obj) return;
+    LOG_INF("Creating trackball sensitivity widgets...");
+
+    memset(&tb_state, 0, sizeof(tb_state));
+
+    /* Title */
+    tb_title_label = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_title_label, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_color(tb_title_label, lv_color_white(), 0);
+    lv_label_set_text(tb_title_label, "Trackball");
+    lv_obj_align(tb_title_label, LV_ALIGN_TOP_MID, 0, 8);
+
+    /* Target (follows the keyboard's layer) and link status */
+    tb_target_label = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_target_label, &lv_font_montserrat_16, 0);
+    lv_obj_set_pos(tb_target_label, 15, 40);
+
+    tb_link_label = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_link_label, &lv_font_montserrat_16, 0);
+    lv_obj_set_width(tb_link_label, 110);
+    lv_obj_set_style_text_align(tb_link_label, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_obj_set_pos(tb_link_label, 155, 40);
+
+    /* Big level value + multiplier */
+    tb_value_label = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_value_label, &lv_font_montserrat_28, 0);
+    lv_obj_set_style_text_color(tb_value_label, lv_color_white(), 0);
+    lv_obj_set_width(tb_value_label, 120);
+    lv_obj_set_style_text_align(tb_value_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_pos(tb_value_label, 80, 64);
+
+    tb_factor_label = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_factor_label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(tb_factor_label, lv_color_hex(0x808080), 0);
+    lv_obj_set_width(tb_factor_label, 120);
+    lv_obj_set_style_text_align(tb_factor_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_pos(tb_factor_label, 80, 98);
+
+    /* -  [slider]  + */
+    tb_minus_btn = tb_make_btn(LV_SYMBOL_MINUS, 0x3A3A3C, 8, 112, 44, 40, &lv_font_montserrat_20);
+    tb_plus_btn = tb_make_btn(LV_SYMBOL_PLUS, 0x3A3A3C, 228, 112, 44, 40, &lv_font_montserrat_20);
+
+    tb_slider = lv_slider_create(screen_obj);
+    lv_obj_set_size(tb_slider, 150, 6);
+    lv_obj_set_pos(tb_slider, 65, 129);
+    lv_slider_set_range(tb_slider, TB_LEVEL_MIN, TB_LEVEL_MAX);
+    lv_slider_set_mode(tb_slider, LV_SLIDER_MODE_SYMMETRICAL);
+    lv_slider_set_value(tb_slider, 0, LV_ANIM_OFF);
+    lv_obj_set_ext_click_area(tb_slider, 20);
+    lv_obj_set_style_radius(tb_slider, 3, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tb_slider, lv_color_hex(0x3A3A3C), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(tb_slider, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_radius(tb_slider, 3, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(tb_slider, lv_color_hex(0x007AFF), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_opa(tb_slider, LV_OPA_COVER, LV_PART_INDICATOR);
+    lv_obj_set_style_radius(tb_slider, LV_RADIUS_CIRCLE, LV_PART_KNOB);
+    lv_obj_set_style_bg_color(tb_slider, lv_color_white(), LV_PART_KNOB);
+    lv_obj_set_style_bg_opa(tb_slider, LV_OPA_COVER, LV_PART_KNOB);
+    lv_obj_set_style_pad_all(tb_slider, 8, LV_PART_KNOB);
+    lv_obj_add_event_cb(tb_slider, tb_slider_event_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(tb_slider, ds_custom_slider_drag_cb, LV_EVENT_PRESSED, NULL);
+    lv_obj_add_event_cb(tb_slider, ds_custom_slider_drag_cb, LV_EVENT_PRESSING, NULL);
+    lv_obj_add_event_cb(tb_slider, ds_custom_slider_drag_cb, LV_EVENT_RELEASED, NULL);
+    lv_obj_add_event_cb(tb_slider, ds_custom_slider_drag_cb, LV_EVENT_PRESS_LOST, NULL);
+    lv_obj_add_event_cb(tb_slider, ds_custom_slider_drag_cb, LV_EVENT_INDEV_RESET, NULL);
+
+    /* BASE / SAVE / DEFAULT */
+    tb_base_btn = tb_make_btn("BASE", 0x4A90E2, 10, 164, 80, 42, &lv_font_montserrat_16);
+    tb_save_btn = tb_make_btn("SAVE", 0x34A853, 100, 164, 80, 42, &lv_font_montserrat_16);
+    tb_default_btn = tb_make_btn("DEFAULT", 0x6E6E73, 190, 164, 80, 42, &lv_font_montserrat_12);
+
+    tb_nav_hint = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_nav_hint, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(tb_nav_hint, lv_color_hex(0x808080), 0);
+    lv_label_set_text(tb_nav_hint, LV_SYMBOL_LEFT " Quick Actions");
+    lv_obj_align(tb_nav_hint, LV_ALIGN_BOTTOM_MID, 0, -8);
+
+    tb_state.last_slider_ms = -TB_SWIPE_GUARD_MS;
+    tb_state.last_cmd_ms = -TB_CMD_HOLD_MS;
+    tb_sens_refresh_widgets(true);
+
+    /* Seed from the last known keyboard state, then open the link */
+    struct pending_display_data snap;
+    if (scanner_get_pending_update(&snap)) {
+        tb_sens_apply_data(&snap);
+    } else if (tb_cursor_cache != ZMK_STATUS_TB_NA) {
+        tb_state.have_data = true;
+        tb_state.supported = true;
+        tb_state.target_scroll = tb_scroll_active_cache;
+        tb_state.level = tb_clamp(tb_scroll_active_cache ? tb_scroll_cache : tb_cursor_cache);
+        tb_sens_refresh_widgets(true);
+    }
+    tb_sens_tick();
+
+    LOG_INF("Trackball sensitivity widgets created");
+}
+
+#endif /* CONFIG_PROSPECTOR_TB_REMOTE */
 
 /* ========== Keyboard Select Screen Functions ========== */
 
@@ -3562,7 +3984,23 @@ static void swipe_process_timer_cb(lv_timer_t *timer) {
             ensure_lvgl_indev_registered();  /* Register for tap-to-reset */
             current_screen = SCREEN_PROSPECTOR_DISPLAY;
             LOG_INF(">>> Transition complete");
-        } else if (current_screen == SCREEN_SYSTEM_SETTINGS) {
+        }
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+        else if (current_screen == SCREEN_TB_SENS && tb_sens_swipe_guard()) {
+            LOG_INF(">>> TB_SENS: swipe ignored (slider drag)");
+        } else if (current_screen == SCREEN_TB_SENS) {
+            LOG_INF(">>> Transitioning: TB_SENS -> QUICK_ACTIONS");
+            destroy_tb_sens_widgets();
+            lv_obj_clean(screen_obj);
+            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
+            lv_obj_invalidate(screen_obj);
+            create_system_settings_widgets();
+            ensure_lvgl_indev_registered();
+            current_screen = SCREEN_SYSTEM_SETTINGS;
+            LOG_INF(">>> Transition complete");
+        }
+#endif
+        else if (current_screen == SCREEN_SYSTEM_SETTINGS) {
             LOG_INF(">>> Transitioning: QUICK_ACTIONS -> MAIN");
             display_settings_save_if_dirty();
             destroy_system_settings_widgets();
@@ -3604,7 +4042,21 @@ static void swipe_process_timer_cb(lv_timer_t *timer) {
             ensure_lvgl_indev_registered();  /* Register for button touch */
             current_screen = SCREEN_SYSTEM_SETTINGS;
             LOG_INF(">>> Transition complete");
-        } else if (current_screen == SCREEN_KEYBOARD_SELECT) {
+        }
+#if IS_ENABLED(CONFIG_PROSPECTOR_TB_REMOTE)
+        else if (current_screen == SCREEN_SYSTEM_SETTINGS) {
+            LOG_INF(">>> Transitioning: QUICK_ACTIONS -> TB_SENS");
+            destroy_system_settings_widgets();
+            lv_obj_clean(screen_obj);
+            lv_obj_set_style_bg_color(screen_obj, lv_color_hex(0x0A0A0A), 0);
+            lv_obj_invalidate(screen_obj);
+            create_tb_sens_widgets();
+            ensure_lvgl_indev_registered();
+            current_screen = SCREEN_TB_SENS;
+            LOG_INF(">>> Transition complete");
+        }
+#endif
+        else if (current_screen == SCREEN_KEYBOARD_SELECT) {
             /* Channel increment on right swipe */
             ks_close_channel_popup();  /* Close popup if open */
             ks_channel_increment();

@@ -235,6 +235,16 @@ config PROSPECTOR_MODE_SCANNER
       Enable scanner mode to receive status advertisements from ZMK keyboards.
       In this mode, Prospector acts as a standalone status display device.
 
+config PROSPECTOR_TB_REMOTE
+    bool "Trackball sensitivity remote (scanner -> keyboard)"
+    default y
+    depends on PROSPECTOR_MODE_SCANNER && PROSPECTOR_TOUCH_ENABLED
+    select BT_BROADCASTER
+    help
+      Adds a touch screen that adjusts a keyboard's trackball sensitivity.
+      While the screen is open the scanner broadcasts small non-connectable
+      command advertisements addressed to the selected keyboard_id.
+
 config PROSPECTOR_TOUCH_ENABLED
     bool "Enable touch panel support"
     default y

@@ -30,11 +30,12 @@ struct zmk_status_adv_data {
     uint8_t status_flags;          // Status flags (bit field)
     uint8_t device_role;           // Device role (CENTRAL/PERIPHERAL/STANDALONE)
     uint8_t device_index;          // Device index for split keyboards
-    uint8_t peripheral_battery[3]; // Battery levels: [0]=Left keyboard, [1]=Right/Aux, [2]=Third device (0=N/A)
+    uint8_t peripheral_battery[2]; // Battery levels: [0]=Left keyboard, [1]=Right/Aux (third slot repurposed)
+    int8_t tb_cursor;              // Trackball cursor sensitivity level (-8..8, ZMK_STATUS_TB_NA = n/a)
     char layer_name[4];            // Layer name (null-terminated, reduced from 6 to 4)
     uint8_t keyboard_id[4];        // Keyboard identifier
     uint8_t modifier_flags;        // Active modifier keys (Ctrl/Shift/Alt/GUI)
-    uint8_t wpm_value;             // Words per minute (0-255, 0 = inactive/unknown)
+    int8_t tb_scroll;              // Trackball scroll sensitivity level (replaces WPM)
     uint8_t channel;               // Channel number 0-255 (0 = accept all/broadcast to all)
 } __packed;  // Total: 26 bytes
 
@@ -47,7 +48,10 @@ struct zmk_status_adv_data {
 #define ZMK_STATUS_FLAG_USB_HID_READY    (1 << 3)
 #define ZMK_STATUS_FLAG_BLE_CONNECTED    (1 << 4)
 #define ZMK_STATUS_FLAG_BLE_BONDED       (1 << 5)
-// Bits 6-7 reserved for future use
+#define ZMK_STATUS_FLAG_TB_LINK          (1 << 6)  // Scanner sensitivity link active
+#define ZMK_STATUS_FLAG_TB_SCROLL        (1 << 7)  // Scroll level is the active target
+
+#define ZMK_STATUS_TB_NA ((int8_t)0x80)  // Trackball sensitivity not available
 
 /**
  * @brief Modifier key flags bit definitions (for modifier_flags field)
@@ -155,6 +159,25 @@ int zmk_status_advertisement_start(void);
  * @return 0 on success, negative error code on failure
  */
 int zmk_status_advertisement_stop(void);
+
+
+/**
+ * @brief Trigger a burst of status advertisements (immediate, repeated)
+ */
+int zmk_status_advertisement_burst(void);
+
+/**
+ * @brief Get this keyboard's 4-byte keyboard_id (same value as in the advertisement)
+ */
+void zmk_status_advertisement_keyboard_id(uint8_t id[4]);
+
+/**
+ * @brief Optional hook: fill trackball sensitivity fields.
+ *
+ * Weak default returns -ENOTSUP (fields are sent as ZMK_STATUS_TB_NA).
+ * Keyboard firmware may provide a strong implementation.
+ */
+int zmk_status_adv_tb_fill(int8_t *cursor, int8_t *scroll, uint8_t *flags);
 
 #ifdef __cplusplus
 }
