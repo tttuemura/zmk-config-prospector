@@ -34,10 +34,15 @@ static struct bt_data tb_ad[] = {
     BT_DATA(BT_DATA_MANUFACTURER_DATA, &pkt, sizeof(pkt)),
 };
 
-/* Identity address: setting a fresh NRPA would fight the always-on active
- * scan that receives keyboard status. */
-static const struct bt_le_adv_param tb_adv_param = BT_LE_ADV_PARAM_INIT(
-    BT_LE_ADV_OPT_USE_IDENTITY, TB_REMOTE_ADV_INT_MIN, TB_REMOTE_ADV_INT_MAX, NULL);
+/*
+ * Non-connectable, NRPA address (options 0). The scanner's always-on active
+ * scan already runs on an NRPA (no PRIVACY, no SCAN_WITH_IDENTITY); for this
+ * case the host pauses the scan, refreshes the NRPA and resumes it. Asking
+ * for the identity address instead is refused by the controller (LE Set
+ * Random Address -> Command Disallowed while scanning).
+ */
+static const struct bt_le_adv_param tb_adv_param =
+    BT_LE_ADV_PARAM_INIT(0, TB_REMOTE_ADV_INT_MIN, TB_REMOTE_ADV_INT_MAX, NULL);
 static int last_err;
 
 static void idle_timeout_handler(struct k_work *work);

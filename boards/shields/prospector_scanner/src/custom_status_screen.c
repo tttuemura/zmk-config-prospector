@@ -2861,6 +2861,7 @@ static const uint16_t tb_factor_permille[TB_LEVEL_MAX - TB_LEVEL_MIN + 1] = {
 };
 
 static lv_obj_t *tb_title_label = NULL;
+static lv_obj_t *tb_layer_label = NULL;
 static lv_obj_t *tb_target_label = NULL;
 static lv_obj_t *tb_link_label = NULL;
 static lv_obj_t *tb_value_label = NULL;
@@ -2874,6 +2875,9 @@ static lv_obj_t *tb_nav_hint = NULL;
 
 static struct {
     bool remote_started;
+    bool have_kb_id;
+    int64_t last_begin_ms;
+    int layer;
     bool have_data;
     bool supported;
     bool link;
@@ -3000,6 +3004,10 @@ static void tb_sens_apply_data(const struct pending_display_data *data) {
     tb_state.link = data->tb_link;
     tb_state.supported = (data->tb_cursor != ZMK_STATUS_TB_NA);
     tb_state.target_scroll = data->tb_scroll_active;
+    tb_state.layer = data->layer;
+    if (tb_layer_label) {
+        lv_label_set_text_fmt(tb_layer_label, "L%d", tb_state.layer);
+    }
 
     int8_t kb_level = tb_state.target_scroll ? data->tb_scroll : data->tb_cursor;
     if (!tb_state.supported || kb_level == ZMK_STATUS_TB_NA) {
@@ -3016,9 +3024,11 @@ static void tb_sens_apply_data(const struct pending_display_data *data) {
 static void tb_sens_tick(void) {
     int64_t now = k_uptime_get();
 
-    if (!tb_state.remote_started) {
+    if (!tb_state.remote_started && now - tb_state.last_begin_ms >= 1000) {
         uint8_t id[4];
-        if (scanner_get_selected_keyboard_id(id)) {
+        tb_state.last_begin_ms = now;
+        tb_state.have_kb_id = scanner_get_selected_keyboard_id(id);
+        if (tb_state.have_kb_id) {
             tb_state.remote_started = (prospector_tb_remote_begin(id) == 0);
         }
     }
@@ -3031,10 +3041,10 @@ static void tb_sens_tick(void) {
     if (now < tb_state.flash_until_ms && tb_state.flash_text) {
         text = tb_state.flash_text;
         color = 0x34C759;
-    } else if (!tb_state.remote_started) {
+    } else if (!tb_state.have_kb_id) {
         text = "NO KB";
         color = 0x808080;
-    } else if (prospector_tb_remote_last_error() != 0) {
+    } else if (!tb_state.remote_started || prospector_tb_remote_last_error() != 0) {
         static char err_buf[16];
         snprintf(err_buf, sizeof(err_buf), "TX ERR %d", prospector_tb_remote_last_error());
         text = err_buf;
@@ -3094,7 +3104,7 @@ static void destroy_tb_sens_widgets(void) {
     lv_obj_t **objs[] = {
         &tb_nav_hint, &tb_default_btn, &tb_save_btn, &tb_base_btn, &tb_plus_btn,
         &tb_minus_btn, &tb_slider, &tb_factor_label, &tb_value_label, &tb_link_label,
-        &tb_target_label, &tb_title_label,
+        &tb_target_label, &tb_title_label, &tb_layer_label,
     };
     for (size_t i = 0; i < ARRAY_SIZE(objs); i++) {
         if (*objs[i]) {
@@ -3109,6 +3119,7 @@ static void create_tb_sens_widgets(void) {
     LOG_INF("Creating trackball sensitivity widgets...");
 
     memset(&tb_state, 0, sizeof(tb_state));
+    tb_state.last_begin_ms = -1000;
 
     /* Title */
     tb_title_label = lv_label_create(screen_obj);
@@ -3116,6 +3127,13 @@ static void create_tb_sens_widgets(void) {
     lv_obj_set_style_text_color(tb_title_label, lv_color_white(), 0);
     lv_label_set_text(tb_title_label, "Trackball");
     lv_obj_align(tb_title_label, LV_ALIGN_TOP_MID, 0, 8);
+
+    /* Keyboard's current layer (top left) */
+    tb_layer_label = lv_label_create(screen_obj);
+    lv_obj_set_style_text_font(tb_layer_label, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(tb_layer_label, lv_color_hex(0xA0A0A0), 0);
+    lv_label_set_text_fmt(tb_layer_label, "L%d", active_layer);  /* last known */
+    lv_obj_set_pos(tb_layer_label, 15, 12);
 
     /* Target (follows the keyboard's layer) and link status */
     tb_target_label = lv_label_create(screen_obj);
