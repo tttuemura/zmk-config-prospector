@@ -4,6 +4,8 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: prospector
       url-base: https://github.com/t-ogura
+    - name: tttuemura
+      url-base: https://github.com/tttuemura
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -11,9 +13,10 @@ manifest:
       # v0.4 リリース後は tag に切り替える
       revision: 5b51501fead672c41b5cfb396f3dafe0894bf4e9
       import: app/west.yml
-    - name: prospector-zmk-module
-      remote: prospector
-      revision: v2.2.3
+    - name: zmk-prospector
+      remote: tttuemura
+      # t-ogura/prospector-zmk-module v2.2.3 + トラックボール感度画面（TrackBallPad_kbd と揃える）
+      revision: module/tb-sensitivity
       path: modules/prospector-zmk-module
   self:
     path: config
