@@ -3034,6 +3034,11 @@ static void tb_sens_tick(void) {
     } else if (!tb_state.remote_started) {
         text = "NO KB";
         color = 0x808080;
+    } else if (prospector_tb_remote_last_error() != 0) {
+        static char err_buf[16];
+        snprintf(err_buf, sizeof(err_buf), "TX ERR %d", prospector_tb_remote_last_error());
+        text = err_buf;
+        color = 0xFF3B30;
     } else if (tb_state.have_data && !tb_state.supported) {
         text = "N/A";
         color = 0x808080;
@@ -3975,9 +3980,10 @@ static void swipe_process_timer_cb(lv_timer_t *timer) {
     transition_in_progress = true;
 
     /*
-     * Navigation (TrackBallPad layout). On this unit a finger moving to the
-     * RIGHT is reported as SWIPE_DIRECTION_LEFT and vice versa, so the
-     * comments below use the physical finger direction.
+     * Navigation (TrackBallPad layout). On this unit swipes are reported
+     * mirrored on both axes (finger right = SWIPE_DIRECTION_LEFT, finger
+     * down = SWIPE_DIRECTION_UP), so the comments use the physical finger
+     * direction.
      *
      *   Main  --right-->  Trackball sensitivity      (left: back)
      *   Main  --down--->  Keyboard select  --down-->  Prospector Display
@@ -3986,7 +3992,7 @@ static void swipe_process_timer_cb(lv_timer_t *timer) {
      *   Main  --left--->  Quick actions              (right: back)
      */
     switch (dir) {
-    case SWIPE_DIRECTION_DOWN:
+    case SWIPE_DIRECTION_UP: /* finger moved down */
         if (current_screen == SCREEN_PROSPECTOR_DISPLAY) {
             prospector_layouts_next();
             display_settings_set_layout((uint8_t)prospector_layouts_get_style());
@@ -4000,7 +4006,7 @@ static void swipe_process_timer_cb(lv_timer_t *timer) {
         }
         break;
 
-    case SWIPE_DIRECTION_UP:
+    case SWIPE_DIRECTION_DOWN: /* finger moved up */
         if (current_screen == SCREEN_PROSPECTOR_DISPLAY) {
             prospector_layouts_prev();
             display_settings_set_layout((uint8_t)prospector_layouts_get_style());

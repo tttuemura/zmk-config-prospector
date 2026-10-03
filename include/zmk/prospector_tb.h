@@ -46,3 +46,4 @@ int prospector_tb_remote_begin(const uint8_t keyboard_id[4]);
 int prospector_tb_remote_send(uint8_t cmd, uint8_t target, int8_t value);
 void prospector_tb_remote_end(void);
 bool prospector_tb_remote_active(void);
+int prospector_tb_remote_last_error(void); /* last advertising error, 0 = ok */

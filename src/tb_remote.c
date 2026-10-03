@@ -34,8 +34,11 @@ static struct bt_data tb_ad[] = {
     BT_DATA(BT_DATA_MANUFACTURER_DATA, &pkt, sizeof(pkt)),
 };
 
-static const struct bt_le_adv_param tb_adv_param =
-    BT_LE_ADV_PARAM_INIT(0, TB_REMOTE_ADV_INT_MIN, TB_REMOTE_ADV_INT_MAX, NULL);
+/* Identity address: setting a fresh NRPA would fight the always-on active
+ * scan that receives keyboard status. */
+static const struct bt_le_adv_param tb_adv_param = BT_LE_ADV_PARAM_INIT(
+    BT_LE_ADV_OPT_USE_IDENTITY, TB_REMOTE_ADV_INT_MIN, TB_REMOTE_ADV_INT_MAX, NULL);
+static int last_err;
 
 static void idle_timeout_handler(struct k_work *work);
 static K_WORK_DELAYABLE_DEFINE(idle_work, idle_timeout_handler);
@@ -54,7 +57,18 @@ static int adv_apply_locked(void) {
     }
 
     err = bt_le_adv_start(&tb_adv_param, tb_ad, ARRAY_SIZE(tb_ad), NULL, 0);
-    if (err == 0 || err == -EALREADY) {
+    if (err == -EALREADY) {
+        /*
+         * The single legacy advertising set is already taken, normally by
+         * ZMK's own connectable "pair with a host" advertising (the scanner
+         * never connects to a host). Our packet would not be sent, so take
+         * the set over while the Trackball screen is open.
+         */
+        bt_le_adv_stop();
+        err = bt_le_adv_start(&tb_adv_param, tb_ad, ARRAY_SIZE(tb_ad), NULL, 0);
+    }
+    last_err = err;
+    if (err == 0) {
         adv_running = true;
         return 0;
     }
@@ -130,6 +144,8 @@ void prospector_tb_remote_end(void) {
     k_mutex_unlock(&tb_lock);
     LOG_INF("tb remote end");
 }
+
+int prospector_tb_remote_last_error(void) { return last_err; }
 
 bool prospector_tb_remote_active(void) {
     return session_open && adv_running;

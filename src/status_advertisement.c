@@ -421,10 +421,15 @@ static struct bt_data name_ad[] = {
 // SCANNABLE + USE_NAME: scanner can get device name via SCAN_RSP
 // Without SCANNABLE, ADV_NONCONN_IND has no SCAN_RSP → name never reaches scanner
 static const struct bt_le_adv_param prospector_adv_params = {
+// USE_IDENTITY (TrackBallPad fork): without it Zephyr gives a non-connectable
+// ADV a fresh NRPA as the controller's random address. A keyboard that also
+// scans with CONFIG_BT_SCAN_WITH_IDENTITY (split central, trackball link)
+// then cannot start scanning: setting the identity address back is refused
+// with Command Disallowed while this ADV is enabled.
 #if defined(BT_LE_ADV_OPT_SCANNABLE)
-    .options = BT_LE_ADV_OPT_SCANNABLE | BT_LE_ADV_OPT_USE_NAME,
+    .options = BT_LE_ADV_OPT_SCANNABLE | BT_LE_ADV_OPT_USE_NAME | BT_LE_ADV_OPT_USE_IDENTITY,
 #else
-    .options = 0,  // Fallback for older Zephyr without SCANNABLE
+    .options = BT_LE_ADV_OPT_USE_IDENTITY,  // Fallback for older Zephyr without SCANNABLE
 #endif
     .interval_min = BT_GAP_ADV_FAST_INT_MIN_2,  // 100ms
     .interval_max = BT_GAP_ADV_FAST_INT_MAX_2,  // 150ms
@@ -457,7 +462,7 @@ static const struct bt_le_adv_param proxy_connectable_params = {
 // SILENT we stop adv entirely so the central gets uncontested radio time
 // (deterministic connect window).
 static const struct bt_le_adv_param burst_adv_params = {
-    .options = 0, // ADV_NONCONN_IND: no connection requests, no scan response
+    .options = BT_LE_ADV_OPT_USE_IDENTITY, // ADV_NONCONN_IND (identity: see prospector_adv_params)
     .interval_min = BT_GAP_ADV_FAST_INT_MIN_2, // 100ms
     .interval_max = BT_GAP_ADV_FAST_INT_MAX_2, // 150ms
 };
